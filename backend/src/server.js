@@ -4,6 +4,9 @@ import cors from 'cors'
 import helmet from 'helmet'
 import 'dotenv/config'
 
+/**Importanto arquivos */
+import db from './models/index.js'
+
 /**Inicializa a instância do Express */
 const app = express();
 
@@ -22,7 +25,14 @@ app.get('/api', (req, res) => {
 })
 
 /**Inicia o Servidor */
-app.listen(PORT, () =>{
-    console.log(`Servidor rodando em: http://localhost:${PORT}`);
+app.listen(PORT, async () =>{
+    try {
+        await db.sequelize.authenticate();
+        await db.sequelize.sync({alter: true});
+        console.log('Base de dados carregada com sucesso!')
+        console.log(`Servidor rodando em: http://localhost:${PORT}`);
+    } catch (error) {
+        console.log(`Erro ao carregar base de dados: ${error}`)
+    }
 })
 

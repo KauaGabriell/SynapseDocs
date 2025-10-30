@@ -4,10 +4,8 @@ import { Sequelize } from 'sequelize'
 /**Importando os models Criados */
 import UserModels from './UserModels.js'
 import ProjectModels from './ProjectModels.js'
-import ProjectDocumentationLink from './ProjectDocumentationLinkModels.js'
-import ApiDocumentationModel from './ApiDocumentationModel'
+import ApiDocumentationModel from './ApiDocumentationModel.js'
 import ProjectDocumentationLinkModels from './ProjectDocumentationLinkModels.js'
-import { FOREIGNKEYS } from 'sequelize/lib/query-types'
 
 const db = {}; // Cria um objeto vazio para armazenar os modelos
 
@@ -58,3 +56,5 @@ db.ApiDocumentation.belongsToMany(db.Project, {
 //Exporta a conexão (sequelize) e o objeto 'db' (com os modelos).
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
+
+export default db;

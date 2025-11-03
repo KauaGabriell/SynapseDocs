@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import 'dotenv/config'
+import session from 'express-session'
 
 /**Importanto arquivos */
 import db from './models/index.js'
@@ -17,6 +18,7 @@ app.use(cors()); //Faz com que o frontend faça requisições para o backend
 app.use(helmet()); //Adiciona camadas se segurança HTTP(Headers)
 app.use(express.json()); //Express entenda JSON
 app.use(express.urlencoded({extended: true}));
+
 
 
 /**Rota Teste de Saúde da Api */

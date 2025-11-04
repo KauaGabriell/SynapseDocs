@@ -2,7 +2,7 @@
  * Regular (400), Semi-Bold (600) e Bold (700)
  */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-
+@import "tailwindcss";
 /* DEFINIR AS VARIÁVEIS GLOBAIS
  * 
  */

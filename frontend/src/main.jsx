@@ -1,10 +1,21 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import './index.css';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import LoginButton from './components/LoginButton';
+import AuthCallback from './pages/AuthCallback';
+
+//Rota para Login
+const router = createBrowserRouter([
+  { path: '/', element: <LoginButton /> },
+  { path: '/dashboard', element: <Dashboard /> },
+  { path: '/auth/callback', element: <AuthCallback /> },
+]);
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <RouterProvider router={router} />
   </StrictMode>,
-)
+);

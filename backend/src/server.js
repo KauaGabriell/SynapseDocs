@@ -37,9 +37,7 @@ app.use(passport.session())
 app.get('/api', (req, res) => {
     res.json({message: 'API FUNCIONANDO'})
 })
-
-
-
+//Rota de autenticação(/github e /github/callback);
 app.use('/api/auth', authRoutes);
 
 /**Inicia o Servidor */

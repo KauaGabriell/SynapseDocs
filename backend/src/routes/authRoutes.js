@@ -3,9 +3,9 @@ import passport from 'passport';
 import authController from '../controllers/authController.js';
 const router = express.Router();
 
-//Redireciona da aplicação para o Github
-router.get('/github',passport.authenticate('github', { scope: ['user:email'] }));
-//Redireciona do Github para a aplicação de volta.
-router.get('/github/callback' ,passport.authenticate('github', {failureRedirect: '/', failureMessage: true,}), authController.githubCallback);
+
+
+router.get('/github',passport.authenticate('github', { scope: ['user:email'] })); //Redireciona da aplicação para o Github
+router.get('/github/callback' ,passport.authenticate('github', {failureRedirect: '/', failureMessage: true,}), authController.githubCallback); //Redireciona do Github para a aplicação de volta.
 
 export default router;

@@ -1,56 +1,12 @@
-/* * 1. IMPORTAR A FONTE (INTER)
- * Regular (400), Semi-Bold (600) e Bold (700)
- */
+/* 1. PRIMEIRO: Imports devem vir ANTES de tudo */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 @import "tailwindcss";
-/* DEFINIR AS VARIÁVEIS GLOBAIS
- * 
- */
-:root {
-  /* Paleta de Cores (Baseada no seu protótipo)  */
-  --color-bg-main: #121212;
-  --color-bg-surface: #1E1E2F; 
-  --color-border: #2C2C3C;
 
-  --color-text-primary: #FFFFFF; 
-  --color-text-secondary: #B0B0C3; 
-
-  --color-accent: #7C5DFA; 
-  --color-success: #28A745;
-  --color-warning: #FFC107; 
-  --color-error: #DC3545; 
-
-  /* Tipografia*/
-  --font-primary: 'Inter', sans-serif; 
-
-  /* Pesos da Fonte */
-  --font-weight-regular: 400; 
-  --font-weight-semibold: 600; 
-  --font-weight-bold: 700; 
-
-  /* Tamanhos da Fonte  */
-  --font-size-lg: 18px; 
-  --font-size-md: 14px; 
-  --font-size-sm: 12px; 
-}
-
-/* * APLICAR ESTILOS GLOBAIS
- * Aqui nós aplicamos a "base" do nosso tema.
- */
-body {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-
-  /* Aplicando nossas variáveis */
-  font-family: var(--font-primary);
-  font-size: var(--font-size-md); /* 14px como padrão */
-  font-weight: var(--font-weight-regular);
-
-  background-color: var(--color-bg-main);
-  color: var(--color-text-primary); 
-
-  /* Melhora a renderização das fontes */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* 2. DEPOIS: Suas customizações */
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #121212;
+    color: #FFFFFF;
+  }
 }

@@ -10,6 +10,7 @@ import passport from 'passport'
 import db from './models/index.js'
 import passportConfig from './config/passport.js'
 import authRoutes from './routes/authRoutes.js'
+import projectRoutes from './routes/projectRoutes.js'
 
 /**Inicializa a instância do Express */
 const app = express();
@@ -39,6 +40,9 @@ app.get('/api', (req, res) => {
 })
 //Rota de autenticação(/github e /github/callback);
 app.use('/api/auth', authRoutes);
+
+//Rotas de projetos
+app.use('/api/projects', projectRoutes)
 
 /**Inicia o Servidor */
 app.listen(PORT, async () =>{

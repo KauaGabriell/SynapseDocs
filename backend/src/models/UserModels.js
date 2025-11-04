@@ -19,7 +19,7 @@ export default (sequelize) => {
         type: DataTypes.STRING(255),
         allowNull: false,
         unique: true,
-        field: 'githubId',
+        field: 'githubid',
       },
       email: {
         type: DataTypes.STRING(255),

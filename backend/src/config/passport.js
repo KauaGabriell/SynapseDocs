@@ -1,5 +1,5 @@
 import passport from 'passport';
-import Strategy from 'passport-github2';
+import { Strategy as GitHubStrategy } from 'passport-github2';
 import db from '../models/index.js';
 
 export default (passport) => {
@@ -17,9 +17,9 @@ export default (passport) => {
                             ? profile.emails[0].value
                             : null;
                     const [user] = await db.User.findOrCreate({
-                        where: { githubId: profile.id },
+                        where: { githubid: profile._json.id },
                         defaults: {
-                            githubId: profile.id,
+                            githubid: profile.id,
                             username: profile.username,
                             email: email,
                         },

@@ -1,0 +1,12 @@
+/* 1. PRIMEIRO: Imports devem vir ANTES de tudo */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+@import "tailwindcss";
+
+/* 2. DEPOIS: Suas customizações */
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #121212;
+    color: #FFFFFF;
+  }
+}

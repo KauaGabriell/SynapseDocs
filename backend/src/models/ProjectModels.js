@@ -24,6 +24,19 @@ export default (sequelize) => {
       allowNull: false,
       defaultValue: 'pending', // Um novo projeto sempre começa como 'pending'
     },
+    description: {
+      type: DataTypes.STRING(1024),
+      allowNull: true,
+    },
+    language: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    progress: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: 0,
+    }
   }, {
     tableName: 'projects', // Define o nome exato da tabela
   });

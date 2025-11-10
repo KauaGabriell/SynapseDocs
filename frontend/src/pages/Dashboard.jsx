@@ -1,16 +1,14 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
-import Sidebar from '../components/Sidebar';
-import Header from '../components/Header';
 
 function Dashboard() {
-  // Lógica de estado
+  // Lógica de estado (não muda)
   const [projects, setProjects] = useState([]);
   const [repoUrl, setRepoUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Lógica para buscar os projetos
+  // Lógica para buscar os projetos (não muda)
   const fetchProjects = async () => {
     try {
       const response = await api.get('/api/projects');
@@ -23,12 +21,12 @@ function Dashboard() {
     }
   };
 
-  // Roda o fetch no carregamento
+  // Lógica para rodar o fetch no carregamento (não muda)
   useEffect(() => {
     fetchProjects();
   }, []);
 
-  // Lógica para adicionar um projeto
+  // Lógica para adicionar um projeto (não muda)
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!repoUrl) return; // Não envia se estiver vazio
@@ -49,98 +47,93 @@ function Dashboard() {
     }
   };
 
-  // Renderização de carregamento/erro
+  // Lógica de renderização de carregamento/erro (não muda)
   if (loading) return <div>Carregando projetos...</div>;
   if (error) return <div>{error}</div>;
 
-  // Renderização Principal (Layout com Sidebar)
+  // Renderização Principal (Simplificada)
+  // O <div className="flex">, <Sidebar />, <Header /> e <main>
+  // foram movidos para o 'Layout.jsx'
   return (
-    <div className="flex bg-bg-main min-h-screen">
-      <Sidebar />
-      <main className="flex-1 flex flex-col">
-        <Header />
+    <>
+      <h1 className="text-3xl font-bold mb-6 text-text-primary">
+        Meus Projetos
+      </h1>
 
-        <div className='p-8'>
-          <h1 className="text-3xl font-bold mb-6 text-text-primary">
-            Meus Projetos
-          </h1>
-
-          {/* Formulário para o POST (Estilizado com as suas classes) */}
-          <form onSubmit={handleSubmit} className="mb-8">
-            <h3 className="text-xl font-semibold mb-3 text-text-secondary">
-              Adicionar Novo Repositório
-            </h3>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={repoUrl}
-                onChange={(e) => setRepoUrl(e.target.value)}
-                placeholder="https://github.com/usuario/repo"
-                className="flex-1 bg-bg-surface border border-border rounded-lg p-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
-              />
-              <button
-                type="submit"
-                className="bg-accent text-text-primary font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition-opacity"
-              >
-                Adicionar
-              </button>
-            </div>
-          </form>
-
-          <hr className="border-border mb-8" />
-
-          {/* Lista para o GET (Estilizada com as suas classes) */}
-          <h2 className="text-2xl font-semibold mb-4 text-text-primary">
-            Projetos no Banco:
-          </h2>
-          <div className="space-y-4">
-            {projects.length === 0 ? (
-              <p className="text-text-secondary">
-                Nenhum projeto encontrado. Adicione um acima para começar.
-              </p>
-            ) : (
-              projects.map((project) => (
-                <div
-                  key={project.id_projects}
-                  className="p-4 bg-bg-surface rounded-lg border border-border flex justify-between items-center"
-                >
-                  <div>
-                    <strong className="text-text-primary text-lg">
-                      {project.name}
-                    </strong>
-                    <p className="text-text-secondary text-sm">
-                      {project.repositoryUrl}
-                    </p>
-                  </div>
-                  <span
-                    // Estilo dinâmico para o status
-                    className={`py-1 px-3 rounded-full text-xs font-semibold
-                    ${
-                      project.status === 'pending'
-                        ? 'bg-warning/20 text-warning'
-                        : ''
-                    }
-                    ${
-                      project.status === 'completed'
-                        ? 'bg-success/20 text-success'
-                        : ''
-                    }
-                    ${
-                      project.status === 'failed'
-                        ? 'bg-error/20 text-error'
-                        : ''
-                    }
-                  `}
-                  >
-                    {project.status}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
+      {/* Formulário para o POST (Estilizado com as suas classes) */}
+      <form onSubmit={handleSubmit} className="mb-8">
+        <h3 className="text-xl font-semibold mb-3 text-text-secondary">
+          Adicionar Novo Repositório
+        </h3>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={repoUrl}
+            onChange={(e) => setRepoUrl(e.target.value)}
+            placeholder="https://github.com/usuario/repo"
+            className="flex-1 bg-bg-surface border border-border rounded-lg p-3 text-text-primary focus:outline-none focus:ring-2 focus:ring-accent"
+          />
+          <button
+            type="submit"
+            className="bg-accent text-text-primary font-semibold py-3 px-6 rounded-lg hover:opacity-90 transition-opacity"
+          >
+            Adicionar
+          </button>
         </div>
-      </main>
-    </div>
+      </form>
+
+      <hr className="border-border mb-8" />
+
+      {/* Lista para o GET (Estilizada com as suas classes) */}
+      <h2 className="text-2xl font-semibold mb-4 text-text-primary">
+        Projetos no Banco:
+      </h2>
+      <div className="space-y-4">
+        {projects.length === 0 ? (
+          <p className="text-text-secondary">
+            Nenhum projeto encontrado. Adicione um acima para começar.
+          </p>
+        ) : (
+          projects.map((project) => (
+            <div
+              key={project.id_projects}
+              className="p-4 bg-bg-surface rounded-lg border border-border flex justify-between items-center"
+            >
+              <div>
+                <strong className="text-text-primary text-lg">
+                  {project.name}
+                </strong>
+                <p className="text-text-secondary text-sm">
+                  {project.repositoryUrl}
+                </p>
+              </div>
+              <span
+                // Estilo dinâmico para o status
+                className={`py-1 px-3 rounded-full text-xs font-semibold
+                  ${
+                    project.status === 'pending'
+                      ? 'bg-warning/20 text-warning'
+                      : ''
+                  }
+                  ${
+                    project.status === 'completed'
+                      ? 'bg-success/20 text-success'
+                      : ''
+                  }
+                  ${
+                    project.status === 'failed'
+                      ? 'bg-error/20 text-error'
+                      : ''
+                  }
+                `}
+              >
+                {project.status}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+    </>
   );
 }
 

@@ -6,6 +6,7 @@ import {
   Settings,
   Zap,
 } from "lucide-react";
+import Logo from '../assets/imgs/Logo.png'
 
 export default function Sidebar() {
   return (
@@ -13,8 +14,8 @@ export default function Sidebar() {
       <div>
         {/* Logo e nome */}
         <div className="flex items-center gap-2 mb-10">
-          <div className="w-9 h-9 rounded-xl bg-linear-to-r from-[#7C5DFA] to-[#5E4BFA] flex items-center justify-center text-white font-bold">
-            S
+          <div className="w-14 h-14 rounded-xl flex items-center justify-center text-white font-bold">
+            <img src={Logo} alt="Ícone de Cérebro" className="w-14 h-14 mt-2" />
           </div>
           <div>
             <h2 className="text-white font-semibold">SynapseDocs</h2>

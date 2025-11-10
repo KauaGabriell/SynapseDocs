@@ -13,7 +13,7 @@ export default function Sidebar() {
       <div>
         {/* Logo e nome */}
         <div className="flex items-center gap-2 mb-10">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-r from-[#7C5DFA] to-[#5E4BFA] flex items-center justify-center text-white font-bold">
+          <div className="w-9 h-9 rounded-xl bg-linear-to-r from-[#7C5DFA] to-[#5E4BFA] flex items-center justify-center text-white font-bold">
             S
           </div>
           <div>

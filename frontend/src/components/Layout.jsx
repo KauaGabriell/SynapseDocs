@@ -9,7 +9,7 @@ function Layout() {
       <Sidebar />
       <main className="flex-1 flex flex-col">
         <Header />
-        <div className="p-8">
+        <div>
           <Outlet /> 
         </div>
 

@@ -1,4 +1,5 @@
 import db from '../models/index.js';
+import analysisService from '../services/analysisService.js';
 
 const projectController = {};
 
@@ -22,6 +23,9 @@ projectController.addProjects = async function (req, res) {
       repositoryUrl,
       id_user: userId,
     });
+
+    analysisService.analyzeRepository(newProject);
+
     res.status(201).json(newProject);
   } catch (error) {
     console.error('Erro ao buscar projetos:', error);

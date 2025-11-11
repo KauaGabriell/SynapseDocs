@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Search, Grid3x3, List, Filter, Code, FileText, Calendar } from 'lucide-react';
-import api from '../services/api'
+import api from '../services/api'; 
 
 function Dashboard() {
   const [projects, setProjects] = useState([]);
@@ -57,20 +57,6 @@ function Dashboard() {
   const filteredProjects = projects.filter(project =>
     project.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  // Função para obter cor do status
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'completed':
-        return 'text-green-400';
-      case 'processing':
-        return 'text-yellow-400';
-      case 'failed':
-        return 'text-red-400';
-      default:
-        return 'text-gray-400';
-    }
-  };
 
   // Função para obter badge do status
   const getStatusBadge = (status) => {

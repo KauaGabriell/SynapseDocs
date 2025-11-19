@@ -17,4 +17,9 @@ router.post('/', projectController.addProjects);
 // Ex: /api/projects/1
 router.get('/:id', projectController.getProjectById);
 
+// routes/projectRoutes.js
+// import já existente e authMiddleware
+router.get('/:id/documentation', projectController.getDocumentation);
+
+
 export default router;

@@ -10,8 +10,28 @@ projectController.getProjects = async function (req, res) {
     const projects = await db.Project.findAll({
       where: { id_user: userId },
       order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: db.ApiDocumentation,
+          as: 'documentation',
+        },
+      ],
     });
-    res.json(projects);
+
+    // Mapeia para adicionar um campo documentationUrl (se existir doc)
+    const mapped = projects.map((p) => {
+      const plain = p.toJSON ? p.toJSON() : p;
+      return {
+        ...plain,
+        documentationUrl: plain.documentation
+          ? `${
+              process.env.BACKEND_BASE_URL || 'http://localhost:3030'
+            }/api/projects/${plain.id_projects}/documentation`
+          : null,
+      };
+    });
+
+    res.json(mapped);
   } catch (error) {
     console.error('Erro ao buscar projetos:', error);
     res.status(500).json({ error: 'Erro interno ao buscar projetos.' });
@@ -76,6 +96,35 @@ projectController.getProjectById = async function (req, res) {
   } catch (error) {
     console.error('Erro ao buscar detalhes do projeto:', error);
     res.status(500).json({ error: 'Erro interno ao buscar detalhes.' });
+  }
+};
+
+// controllers/projectController.js (novo método)
+projectController.getDocumentation = async function (req, res) {
+  try {
+    const projectId = req.params.id;
+    const userId = req.id_user;
+
+    // Confere propriedade do projeto (segurança)
+    const project = await db.Project.findOne({
+      where: { id_projects: projectId, id_user: userId },
+    });
+
+    if (!project)
+      return res.status(404).json({ error: 'Projeto não encontrado' });
+
+    const doc = await db.ApiDocumentation.findOne({
+      where: { id_project: projectId },
+    });
+
+    if (!doc)
+      return res.status(404).json({ error: 'Documentação não encontrada' });
+
+    // Retorna o JSON de documentação (raw)
+    res.json(doc.content);
+  } catch (err) {
+    console.error('Erro ao buscar documentação:', err);
+    res.status(500).json({ error: 'Erro ao buscar documentação' });
   }
 };
 

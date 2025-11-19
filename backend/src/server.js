@@ -48,7 +48,7 @@ app.use('/api/projects', projectRoutes)
 app.listen(PORT, async () =>{
     try {
         await db.sequelize.authenticate();
-        await db.sequelize.sync({force: true});
+        await db.sequelize.sync({alter: true});
         console.log('Base de dados carregada com sucesso!')
         console.log(`Servidor rodando em: http://localhost:${PORT}`);
     } catch (error) {

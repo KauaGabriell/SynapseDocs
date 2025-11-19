@@ -1,31 +1,27 @@
 import { simpleGit } from 'simple-git';
 import path from 'path';
-import fs from 'fs/promises'; // Para manipulação de arquivos
+import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
+import { GoogleGenerativeAI } from '@google/generative-ai'; // Importa o Gemini
+import db from '../models/index.js'; // Importa o Banco
 
-// 1. Configuração de Caminhos
+// Configurações
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-// Define onde os repositórios serão salvos: backend/tmp/
 const tmpPath = path.join(__dirname, '../../tmp');
-
 const git = simpleGit();
-const analysisService = {};
 
-/**
- * Função Auxiliar: Lê arquivos recursivamente de uma pasta.
- * Ignora pastas inúteis (node_modules, etc) e arquivos binários.
- */
+// Inicializa o Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
 async function getProjectFiles(dir) {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   const files = [];
 
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
-
-    // 1. Se for diretório, decide se entra ou ignora
     if (entry.isDirectory()) {
-      // Lista negra de pastas para ignorar
       if (
         [
           'node_modules',
@@ -35,126 +31,125 @@ async function getProjectFiles(dir) {
           'coverage',
           '.idea',
           '.vscode',
+          '__pycache__',
         ].includes(entry.name)
-      ) {
+      )
         continue;
-      }
-      // Recursão: entra na subpasta e adiciona o que encontrar
       files.push(...(await getProjectFiles(fullPath)));
-    }
-    // 2. Se for arquivo, decide se lê
-    else {
-      // Filtra apenas extensões de código relevantes para nossa análise
+    } else {
       if (/\.(js|ts|jsx|tsx|json|py|java|cs|php|go|rb|rs)$/.test(entry.name)) {
-        // Ignora arquivos de lock grandes (package-lock.json, etc)
         if (entry.name.includes('lock')) continue;
-
         try {
           const content = await fs.readFile(fullPath, 'utf-8');
-          // Adiciona ao array: Caminho e Conteúdo
-          files.push({
-            path: fullPath,
-            // Armazena o nome relativo para facilitar a leitura (ex: src/server.js)
-            name: entry.name,
-            content: content,
-          });
-        } catch (readError) {
-          console.warn(
-            `Não foi possível ler o arquivo ${entry.name}: ${readError.message}`,
-          );
-        }
+          if (content.length < 100000) {
+            files.push({
+              path: fullPath,
+              name: entry.name,
+              content: content,
+            });
+          }
+        } catch (e) {}
       }
     }
   }
   return files;
 }
 
-/**
- * Função Principal: Gerencia o ciclo de vida da análise
- * @param {object} project - O modelo do Sequelize (contém id, url, etc.)
- */
-analysisService.analyzeRepository = async (project) => {
-  console.log(`[Análise] Iniciando: ${project.name} (${project.id_projects})`);
+const analysisService = {};
 
+analysisService.analyzeRepository = async (project) => {
+  console.log(`[Análise] Iniciando: ${project.name}`);
   const repoFolder = path.join(tmpPath, project.id_projects.toString());
 
   try {
-    // --- PASSO 1: Atualizar Status Inicial ---
     await project.update({
       status: 'processing',
       progress: 10,
-      description: 'Preparando ambiente...',
+      description: 'Clonando...',
     });
 
-    // --- PASSO 2: Limpeza de Segurança ---
+    // 1. Limpeza e Clone
     try {
       await fs.rm(repoFolder, { recursive: true, force: true });
-      console.log(`[Análise] Pasta limpa: ${repoFolder}`);
-    } catch (e) {
-      // Ignora se a pasta não existir
-    }
-
-    // --- PASSO 3: Clonagem ---
-    console.log(`[Análise] Clonando ${project.repositoryUrl}...`);
-    await project.update({ description: 'Baixando código-fonte...' });
-
+    } catch (e) {}
     await git.clone(project.repositoryUrl, repoFolder);
-    console.log('[Análise] Repositório clonado.');
+    await project.update({ progress: 30, description: 'Lendo arquivos...' });
 
-    await project.update({
-      progress: 30,
-      description: 'Lendo arquivos do projeto...',
-    });
-
-    // --- PASSO 4: Leitura de Arquivos ---
-    console.log(`[Análise] Lendo arquivos de: ${repoFolder}`);
+    // 2. Leitura dos Arquivos
     const files = await getProjectFiles(repoFolder);
+    console.log(`[Análise] ${files.length} arquivos lidos.`);
 
-    console.log(`[Análise] ${files.length} arquivos de código encontrados.`);
-
-    // Log para verificarmos no terminal se ele achou os arquivos certos
-    if (files.length > 0) {
-      console.log('Arquivos encontrados (amostra):');
-      files.slice(0, 5).forEach((f) => console.log(` - ${f.name}`)); // Mostra os 5 primeiros
-    } else {
-      console.warn('[Análise] Nenhum arquivo de código relevante encontrado!');
-    }
+    if (files.length === 0)
+      throw new Error('Nenhum arquivo de código encontrado.');
 
     await project.update({
       progress: 50,
-      description: 'Processando código com IA...',
+      description: 'Gerando documentação com IA...',
     });
 
-    // --- PASSO 5: Chamar a IA (Gemini) ---
-    // (Esta parte implementaremos no próximo Item do Checklist)
-    // Por enquanto, simulamos o sucesso.
+    // 3. Montar o Prompt para a IA
+    let prompt = `
+      Você é um Engenheiro de Software Sênior especialista em documentação de API.
+      Analise o código-fonte abaixo e gere uma especificação OpenAPI 3.0 completa em formato JSON.
+      
+      Regras:
+      1. Identifique todas as rotas (endpoints), métodos HTTP, parâmetros e corpos de requisição.
+      2. Identifique os modelos de dados (schemas).
+      3. O título da API deve ser "${project.name}".
+      4. Responda APENAS com o JSON válido. Sem markdown, sem explicações.
 
-    await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulação
+      Código do Projeto:
+    `;
 
-    // --- PASSO 6: Finalização ---
+    files.forEach((file) => {
+      prompt += `\n--- ARQUIVO: ${file.name} ---\n${file.content}\n`;
+    });
+
+    // 4. Chamar o Gemini
+    console.log('[Análise] Enviando para o Gemini...');
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text();
+
+    // Limpeza do texto da IA
+    text = text
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim();
+
+    console.log('[Análise] Resposta recebida. Salvando...');
+
+    // 5. Salvar no Banco de Dados
+    const jsonContent = JSON.parse(text);
+
+    // Cria ou Atualiza a documentação
+    // (Usamos create porque a relação é 1-1 e o projeto é novo)
+    const doc = await db.ApiDocumentation.create({
+      content: jsonContent,
+      version: '1.0.0',
+    });
+
+    await project.setApiDocumentation(doc);
+
+    // 6. Finalizar
     await project.update({
       status: 'completed',
       progress: 100,
-      // Tenta adivinhar a linguagem baseada nos arquivos (lógica simples)
       language: files.some((f) => f.name.endsWith('.py'))
         ? 'Python'
-        : 'JavaScript/TypeScript',
-      description: `Análise concluída. ${files.length} arquivos processados.`,
+        : 'JavaScript',
+      description:
+        jsonContent.info?.description || 'Documentação gerada automaticamente.',
     });
 
-    console.log('[Análise] Finalizado com sucesso.');
+    console.log('[Análise] Sucesso Total!');
   } catch (err) {
-    console.error(`[Análise] Falha: ${err.message}`);
-
-    try {
-      await project.update({
-        status: 'failed',
-        progress: 0,
-        description: `Erro: ${err.message}`,
-      });
-    } catch (dbError) {
-      console.error('Erro ao atualizar status no banco:', dbError);
-    }
+    console.error(`[Análise] Erro:`, err);
+    await project.update({
+      status: 'failed',
+      progress: 0,
+      description: `Falha: ${err.message.slice(0, 200)}`,
+    });
   }
 };
 

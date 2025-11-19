@@ -1,3 +1,21 @@
-node_modules
+# backend/.gitignore
+
+# Dependências (O MAIS IMPORTANTE)
+node_modules/
+
+# Arquivos de Ambiente (Segurança)
 .env
+.env.local
+.env.test
+
+# Logs e debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Pasta temporária (Nossa lógica de clone)
 tmp/
+
+# Arquivos do Sistema Operacional
+.DS_Store
+Thumbs.db

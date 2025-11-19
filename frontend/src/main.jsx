@@ -8,7 +8,9 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AuthCallback from './pages/AuthCallback';
-import LoginError from './pages/LoginError'; 
+import LoginError from './pages/LoginError';
+import ProjectDetails from './pages/ProjectDetails';
+import DocumentationPage from './pages/DocumentationPage';
 
 // Rotas
 const router = createBrowserRouter([
@@ -25,10 +27,18 @@ const router = createBrowserRouter([
     path: '/login-error',
     element: <LoginError />,
   },
+  {
+    path: '/project/:id',
+    element: <ProjectDetails />,
+  },
+  {
+    path: '/project/:id/documentation',
+    element: <DocumentationPage />,
+  },
 
   // --- Rotas Protegidas (Tudo aqui DENTRO terá Sidebar/Header) ---
   {
-    element: <Layout />, 
+    element: <Layout />,
     children: [
       {
         path: '/dashboard',

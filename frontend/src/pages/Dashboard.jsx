@@ -1,4 +1,4 @@
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useNavigate } from "react-router-dom";
 import {
   Grid3x3,
   List,
@@ -33,6 +33,8 @@ export default function Dashboard() {
   const { projects, loading } = useOutletContext();
   const [viewMode, setViewMode] = useState("grid");
   const [searchTerm, setSearchTerm] = useState("");
+
+  const navigate = useNavigate();
 
   if (loading)
     return (
@@ -77,6 +79,7 @@ export default function Dashboard() {
           >
             <Grid3x3 className="w-5 h-5" />
           </button>
+
           <button
             onClick={() => setViewMode("list")}
             className={`p-3 rounded-lg border border-gray-800 ${
@@ -87,6 +90,7 @@ export default function Dashboard() {
           >
             <List className="w-5 h-5" />
           </button>
+
           <button className="flex items-center gap-2 py-3 px-4 bg-[#1a1f2e] border border-gray-800 rounded-lg text-gray-400 hover:text-white transition">
             <Filter className="w-4 h-4" /> Filtros
           </button>
@@ -101,12 +105,14 @@ export default function Dashboard() {
           </h3>
           <p className="text-sm text-gray-400">Documentações Prontas</p>
         </div>
+
         <div className="bg-[#1a1f2e] p-5 rounded-2xl border border-gray-800">
           <h3 className="text-3xl font-bold text-yellow-400 mb-1">
             {stats.processando}
           </h3>
           <p className="text-sm text-gray-400">Em Processamento</p>
         </div>
+
         <div className="bg-[#1a1f2e] p-5 rounded-2xl border border-gray-800">
           <h3 className="text-3xl font-bold text-red-400 mb-1">{stats.erro}</h3>
           <p className="text-sm text-gray-400">Com Erro</p>
@@ -115,9 +121,7 @@ export default function Dashboard() {
 
       {/* Lista */}
       <div>
-        <h2 className="text-xl font-semibold text-white mb-4">
-          Seus Projetos
-        </h2>
+        <h2 className="text-xl font-semibold text-white mb-4">Seus Projetos</h2>
         <p className="text-gray-400 mb-6">
           {filtered.length} de {projects.length} repositórios
         </p>
@@ -154,6 +158,7 @@ export default function Dashboard() {
                       <User className="w-4 h-4" />
                       <span>{p.author || "Desconhecido"}</span>
                     </div>
+
                     <div className="flex items-center gap-1.5">
                       <Calendar className="w-4 h-4" />
                       <span>
@@ -163,6 +168,7 @@ export default function Dashboard() {
                     </div>
                   </div>
 
+                  {/* Barra de progresso */}
                   {p.status === "processing" && (
                     <div className="flex items-center gap-3 mb-5">
                       <div className="w-full bg-gray-700 rounded-full h-1.5">
@@ -178,6 +184,7 @@ export default function Dashboard() {
                   )}
                 </div>
 
+                {/* BOTÕES */}
                 <div className="flex items-center gap-4 mt-auto pt-4 border-t border-gray-800/50">
                   <a
                     href={p.repositoryUrl}
@@ -187,16 +194,16 @@ export default function Dashboard() {
                   >
                     <Code className="w-4 h-4" /> Ver Código
                   </a>
-                  {p.documentationUrl && (
-                    <a
-                      href={p.documentationUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 w-full bg-[#2a3142] hover:bg-[#384054] text-gray-300 font-medium py-2.5 px-4 rounded-lg transition-colors"
-                    >
-                      <FileText className="w-4 h-4" /> Documentação
-                    </a>
-                  )}
+
+                  {/* Novo botão de documentação */}
+                  <button
+                    onClick={() =>
+                      navigate(`/project/${p.id_projects}/documentation`)
+                    }
+                    className="flex items-center justify-center gap-2 w-full bg-[#2a3142] hover:bg-[#384054] text-gray-300 font-medium py-2.5 px-4 rounded-lg transition-colors"
+                  >
+                    <FileText className="w-4 h-4" /> Documentação
+                  </button>
                 </div>
               </div>
             ))}

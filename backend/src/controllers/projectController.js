@@ -9,7 +9,7 @@ projectController.getProjects = async function (req, res) {
     const userId = req.id_user;
     const projects = await db.Project.findAll({
       where: { id_user: userId },
-      order: [['createdAt', 'DESC']], // Ordena pelos mais recentes
+      order: [['createdAt', 'DESC']],
     });
     res.json(projects);
   } catch (error) {
@@ -18,15 +18,16 @@ projectController.getProjects = async function (req, res) {
   }
 };
 
-// Adiciona um novo projeto e inicia a análise
+// Adiciona um novo projeto
 projectController.addProjects = async function (req, res) {
   const { name, repositoryUrl } = req.body;
+  // Preenche com null se não vier do front
   const description = req.body.description || null;
   const language = req.body.language || null;
 
   try {
     const userId = req.id_user;
-    
+
     const newProject = await db.Project.create({
       name,
       repositoryUrl,
@@ -37,7 +38,7 @@ projectController.addProjects = async function (req, res) {
       progress: 0,
     });
 
-    // Inicia a análise em background
+    // Inicia a análise (sem await para não travar a resposta)
     analysisService.analyzeRepository(newProject);
 
     res.status(201).json(newProject);
@@ -47,23 +48,24 @@ projectController.addProjects = async function (req, res) {
   }
 };
 
-
-// Busca um projeto específico E sua documentação
+// Busca detalhes de um projeto específico
 projectController.getProjectById = async function (req, res) {
   const { id } = req.params;
   const userId = req.id_user;
 
   try {
     const project = await db.Project.findOne({
-      where: { 
+      where: {
         id_projects: id,
-        id_user: userId // Segurança: Garante que o projeto pertence ao usuário logado
+        id_user: userId,
       },
-      // O "Pulo do Gato": Traz a documentação associada junto!
-      include: [{
-        model: db.ApiDocumentation,
-        as: 'ApiDocumentation' // (O Sequelize gera esse alias automaticamente pelo hasOne)
-      }]
+      // AQUI ESTÁ O USO:
+      include: [
+        {
+          model: db.ApiDocumentation,
+          as: 'documentation', // <--- O apelido TEM que ser igual ao do index.js
+        },
+      ],
     });
 
     if (!project) {

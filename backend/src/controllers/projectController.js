@@ -128,4 +128,25 @@ projectController.getDocumentation = async function (req, res) {
   }
 };
 
+projectController.deleteProject = async function (req, res) {
+  try {
+    const { id } = req.params;
+    const userId = req.id_user;
+
+    const project = await db.Project.findOne({
+      where: { id_projects: id, id_user: userId }
+    });
+
+    if (!project) {
+      return res.status(404).json({ error: 'Projeto não encontrado.' });
+    }
+
+    await project.destroy();
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erro ao excluir projeto:', error);
+    res.status(500).json({ error: 'Erro interno ao excluir projeto.' });
+  }
+};
+
 export default projectController;

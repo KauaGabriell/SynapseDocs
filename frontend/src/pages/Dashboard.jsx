@@ -6,10 +6,9 @@ import {
   List,
   Filter,
   Search,
-  User,
-  FileText,
-  Code,
+  Trash2,
 } from "lucide-react";
+import ProjectCard from "../components/ProjectCard";
 
 const StatusBadge = ({ status }) => {
   const classes = {
@@ -43,6 +42,9 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   // PAGINATION
   const [page, setPage] = useState(1);
@@ -63,7 +65,7 @@ export default function Dashboard() {
         });
 
         if (!cancelled) {
-          setProjects(data.items);       // <- CORRIGIDO
+          setProjects(data.items);
           setTotalPages(data.totalPages);
         }
       } catch (err) {
@@ -79,6 +81,31 @@ export default function Dashboard() {
       cancelled = true;
     };
   }, [page, searchTerm, statusFilter]);
+
+  const handleDeleteClick = (project) => {
+    setProjectToDelete(project);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!projectToDelete) return;
+
+    setDeleting(true);
+    try {
+      await api.delete(`/api/projects/${projectToDelete.id_projects}`);
+      
+      // Remove o projeto da lista local
+      setProjects(prev => prev.filter(p => p.id_projects !== projectToDelete.id_projects));
+      
+      setDeleteModalOpen(false);
+      setProjectToDelete(null);
+    } catch (err) {
+      console.error("Erro ao deletar projeto:", err);
+      alert("Erro ao excluir projeto. Tente novamente.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const stats = {
     prontas: projects.filter((p) => p.status === "completed").length,
@@ -228,43 +255,13 @@ export default function Dashboard() {
             }`}
           >
             {projects.map((p) => (
-              <div
+              <ProjectCard
                 key={p.id_projects}
-                className="bg-[#1a1f2e] rounded-2xl p-6 border border-gray-800 hover:border-blue-500/50 transition-all shadow-lg flex flex-col"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-semibold truncate">{p.name}</h3>
-                  <StatusBadge status={p.status} />
-                </div>
-
-                <p className="text-gray-400 text-sm mb-4 line-clamp-2">
-                  {p.description || "Sem descrição"}
-                </p>
-
-                <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                  <User className="w-4 h-4" />
-                  <span className="truncate">{p.author || "Desconhecido"}</span>
-                </div>
-
-                <div className="mt-auto flex gap-2">
-                  <a
-                    href={p.repositoryUrl}
-                    target="_blank"
-                    className="flex items-center justify-center gap-2 w-full bg-[#2a3142] hover:bg-[#384054] text-gray-300 font-medium py-2 rounded-lg transition"
-                  >
-                    <Code className="w-4 h-4" /> Ver Código
-                  </a>
-
-                  <button
-                    onClick={() =>
-                      navigate(`/project/${p.id_projects}/documentation`)
-                    }
-                    className="flex items-center justify-center gap-2 w-full bg-[#2a3142] hover:bg-[#384054] text-gray-300 font-medium py-2 rounded-lg transition"
-                  >
-                    <FileText className="w-4 h-4" /> Docs
-                  </button>
-                </div>
-              </div>
+                project={p}
+                viewMode={viewMode}
+                onOpenDocs={() => navigate(`/project/${p.id_projects}/documentation`)}
+                onDelete={() => handleDeleteClick(p)}
+              />
             ))}
           </div>
         )}
@@ -288,6 +285,59 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* DELETE MODAL */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#1a1f2e] border border-gray-800 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">Excluir Projeto</h3>
+                <p className="text-sm text-gray-400">Esta ação não pode ser desfeita</p>
+              </div>
+            </div>
+
+            <p className="text-gray-300 mb-6">
+              Tem certeza que deseja excluir o projeto{" "}
+              <span className="font-semibold text-white">{projectToDelete?.name}</span>?
+              Toda a documentação associada também será removida.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setProjectToDelete(null);
+                }}
+                disabled={deleting}
+                className="flex-1 px-4 py-2 bg-[#2a3142] hover:bg-[#384054] text-gray-300 font-medium rounded-lg transition disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Excluindo...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Excluir
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

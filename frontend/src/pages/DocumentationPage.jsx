@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Search, ChevronDown, ChevronRight,
-  Copy, Check, Download, Tag
+  Copy, Check, Download, Tag, MessageSquare
 } from "lucide-react";
 import api from "../services/api";
+import ProjectChat from "../components/ProjectChat";
 
 /* ======================================================
    Estilos dos Métodos HTTP
@@ -67,6 +68,7 @@ export default function DocumentationPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTag, setSelectedTag] = useState("");
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -126,7 +128,7 @@ export default function DocumentationPage() {
     <div className="flex h-screen bg-[#0f1419] text-white overflow-hidden">
 
       {/* =====================================================
-          SIDEBAR MINIMALISTA (OPÇÃO A)
+          SIDEBAR MINIMALISTA
       ===================================================== */}
       <aside className="w-72 bg-[#16181D] border-r border-[#2C2C3C] flex flex-col">
 
@@ -151,7 +153,7 @@ export default function DocumentationPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar endpoints…"
-              className="w-full bg-[#0F1216] border border-[#2C2C3C] rounded-lg text-sm pl-9 pr-3 py-2 focus:border-[#7C5DFA]"
+              className="w-full bg-[#0F1216] border border-[#2C2C3C] rounded-lg text-sm pl-9 pr-3 py-2 focus:border-[#7C5DFA] outline-none"
             />
           </div>
         </div>
@@ -185,6 +187,12 @@ export default function DocumentationPage() {
 
         {/* Botões inferiores */}
         <div className="p-4 border-t border-[#2C2C3C] space-y-2">
+          <button
+            onClick={() => setChatOpen(true)}
+            className="w-full py-2 bg-[#7C5DFA] hover:bg-[#6C4FE0] rounded-lg text-white flex items-center justify-center gap-2 transition-colors"
+          >
+            <MessageSquare size={16} /> Chat com IA
+          </button>
           <button
             onClick={() => navigate("/dashboard")}
             className="w-full py-2 bg-[#0F1216] rounded-lg border border-[#2C2C3C] hover:bg-[#1A1D23] text-gray-300 flex items-center justify-center gap-2"
@@ -248,6 +256,15 @@ export default function DocumentationPage() {
 
       </main>
 
+      {/* =====================================================
+          CHAT IA (Componente importado)
+      ===================================================== */}
+      <ProjectChat 
+        projectId={id} 
+        open={chatOpen} 
+        onClose={() => setChatOpen(false)} 
+      />
+
     </div>
   );
 }
@@ -265,10 +282,10 @@ function EndpointCard({ method, path, details, components }) {
       {/* Cabeçalho */}
       <button
         onClick={() => setOpen(!open)}
-        className="w-full text-left px-4 py-4 flex items-center justify-between hover:bg-[#1D1F26]"
+        className="w-full text-left px-4 py-4 flex items-center justify-between hover:bg-[#1D1F26] transition-colors"
       >
         <div className="flex items-center gap-3">
-          <span className={`px-3 py-1 rounded-md text-xs ${methodColor}`}>
+          <span className={`px-3 py-1 rounded-md text-xs font-medium ${methodColor}`}>
             {method}
           </span>
 
@@ -286,7 +303,7 @@ function EndpointCard({ method, path, details, components }) {
       {open && (
         <div className="px-6 py-6 border-t border-[#2C2C3C] bg-[#111318] space-y-8">
 
-          <p className="text-shadow-white text-sm">{details.description}</p>
+          <p className="text-gray-300 text-sm">{details.description}</p>
 
           {/* Request Body */}
           {details?.requestBody?.content?.["application/json"]?.schema && (
@@ -301,7 +318,7 @@ function EndpointCard({ method, path, details, components }) {
 
           {/* Responses */}
           <div>
-            <h3 className="text-xs text-gray-500 uppercase mb-3">Respostas</h3>
+            <h3 className="text-xs text-gray-500 uppercase mb-3 font-semibold">Respostas</h3>
 
             {Object.entries(details.responses).map(([status, r]) => {
               const style = statusStyles[status[0]] || statusStyles.DEFAULT;
@@ -312,7 +329,7 @@ function EndpointCard({ method, path, details, components }) {
                   className="border border-[#2C2C3C] rounded-lg bg-[#0F1216] mb-4"
                 >
                   <div className="px-4 py-2 border-b border-[#2C2C3C] flex items-center gap-3">
-                    <span className={`text-xs px-2 py-1 border rounded ${style}`}>
+                    <span className={`text-xs px-2 py-1 border rounded font-medium ${style}`}>
                       {status}
                     </span>
                     <span className="text-xs text-gray-400">{r.description}</span>
@@ -351,17 +368,20 @@ function JsonPreview({ title, schema }) {
 
   return (
     <div>
-      {title && <h3 className="text-xs text-gray-500 uppercase mb-2">{title}</h3>}
+      {title && <h3 className="text-xs text-gray-500 uppercase mb-2 font-semibold">{title}</h3>}
       <div className="rounded-lg bg-[#0F1216] border border-[#2C2C3C] overflow-hidden">
         <div className="px-4 py-2 bg-[#131720] border-b border-[#2C2C3C] flex justify-between items-center">
-          <span className="text-gray-500 text-xs">application/json</span>
-          <button onClick={copy} className="text-gray-500 hover:text-white flex items-center gap-1 text-xs">
+          <span className="text-gray-500 text-xs font-mono">application/json</span>
+          <button 
+            onClick={copy} 
+            className="text-gray-500 hover:text-white flex items-center gap-1 text-xs transition-colors"
+          >
             {copied ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
             {copied ? "Copiado" : "Copiar"}
           </button>
         </div>
 
-        <pre className="p-4 text-[11px] text-gray-300 overflow-x-auto">
+        <pre className="p-4 text-[11px] text-gray-300 overflow-x-auto font-mono">
           {json}
         </pre>
       </div>

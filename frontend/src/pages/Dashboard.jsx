@@ -47,28 +47,37 @@ export default function Dashboard() {
   // PAGINATION
   const [page, setPage] = useState(1);
 
-  async function loadProjects() {
-    try {
-      const { data } = await api.get("/api/projects", {
-        params: {
-          page,
-          limit: 6,
-          search: searchTerm,
-          status: statusFilter
-        }
-      });
-
-      setProjects(data.items);       // <- CORRIGIDO
-      setTotalPages(data.totalPages);
-    } catch (err) {
-      console.error("Erro ao carregar projetos:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
+    let cancelled = false;
+
+    async function loadProjects() {
+      setLoading(true);
+      try {
+        const { data } = await api.get("/api/projects", {
+          params: {
+            page,
+            limit: 6,
+            search: searchTerm,
+            status: statusFilter
+          }
+        });
+
+        if (!cancelled) {
+          setProjects(data.items);       // <- CORRIGIDO
+          setTotalPages(data.totalPages);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar projetos:", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
     loadProjects();
+
+    return () => {
+      cancelled = true;
+    };
   }, [page, searchTerm, statusFilter]);
 
   const stats = {

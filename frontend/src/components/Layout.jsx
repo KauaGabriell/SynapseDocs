@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
 import { Outlet } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
-import Header from "../components/Header";
-import ModalAddRepo from "../components/ModalAddRepo";
+import Sidebar from "./Sidebar";
+import Header from "./Header";
+import ModalAddRepo from "./ModalAddRepo";
+import { useEffect, useState } from "react";
 import api from "../services/api";
 
 export default function Layout() {
@@ -33,7 +33,7 @@ export default function Layout() {
         <Header onAddRepo={() => setIsModalOpen(true)} />
 
         <main className="flex-1 overflow-y-auto p-8">
-          <Outlet context={{ projects, fetchProjects, loading }} />
+          <Outlet context={{ projects, loading, fetchProjects }} />
         </main>
       </div>
 

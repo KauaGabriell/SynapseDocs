@@ -11,6 +11,7 @@ import LoginError from './pages/LoginError';
 import ProjectDetails from './pages/ProjectDetails';
 import DocumentationPage from './pages/DocumentationPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import Register from './pages/Register';
 
 const router = createBrowserRouter([
   // --- Rotas Públicas ---
@@ -19,6 +20,7 @@ const router = createBrowserRouter([
   { path: '/login-error', element: <LoginError /> },
   { path: '/project/:id', element: <ProjectDetails /> },
   { path: '/project/:id/documentation', element: <DocumentationPage /> },
+  { path: '/register', element: <Register /> },
 
   // --- Rotas Protegidas (dashboard + layout inteiro) ---
   {
@@ -30,14 +32,14 @@ const router = createBrowserRouter([
     children: [
       {
         path: '/dashboard',
-        element: <Dashboard />
-      }
-    ]
+        element: <Dashboard />,
+      },
+    ],
   },
 ]);
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <RouterProvider router={router} />
-  </StrictMode>
+  </StrictMode>,
 );

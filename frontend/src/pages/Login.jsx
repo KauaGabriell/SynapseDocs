@@ -118,7 +118,7 @@ function Login() {
             Esqueci minha senha
           </a>
           <span>·</span>
-          <a href="#" className="hover:text-purple-400 transition-colors">
+          <a href="/register" className="hover:text-purple-400 transition-colors">
             Não tem uma conta?
           </a>
         </div>

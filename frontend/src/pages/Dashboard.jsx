@@ -9,6 +9,7 @@ import {
   Trash2,
 } from "lucide-react";
 import ProjectCard from "../components/ProjectCard";
+import UserMenu from "../components/UserMenu";
 
 const StatusBadge = ({ status }) => {
   const classes = {
@@ -94,7 +95,6 @@ export default function Dashboard() {
     try {
       await api.delete(`/api/projects/${projectToDelete.id_projects}`);
       
-      // Remove o projeto da lista local
       setProjects(prev => prev.filter(p => p.id_projects !== projectToDelete.id_projects));
       
       setDeleteModalOpen(false);
@@ -123,6 +123,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
+
       {/* HEADER */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         
@@ -141,9 +142,10 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* FILTER + VIEW */}
+        {/* RIGHT SIDE: FILTER / VIEW / USER MENU */}
         <div className="flex items-center gap-3">
-          {/* FILTER DROPDOWN */}
+
+          {/* FILTER */}
           <div className="relative">
             <button
               onClick={() => setFilterOpen(!filterOpen)}
@@ -214,10 +216,13 @@ export default function Dashboard() {
           >
             <List className="w-5 h-5" />
           </button>
+
+          {/* USER MENU */}
+          <UserMenu />
         </div>
       </div>
 
-      {/* RESUMO */}
+      {/* STATS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-[#1a1f2e] p-5 rounded-2xl border border-gray-800">
           <h3 className="text-3xl font-bold text-green-400">{stats.prontas}</h3>
@@ -235,7 +240,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* LIST */}      
+      {/* PROJECT LIST */}
       <div>
         <h2 className="text-xl font-semibold text-white mb-4">Seus Projetos</h2>
         <p className="text-gray-400 mb-6">

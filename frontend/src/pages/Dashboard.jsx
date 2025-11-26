@@ -216,9 +216,6 @@ export default function Dashboard() {
           >
             <List className="w-5 h-5" />
           </button>
-
-          {/* USER MENU */}
-          <UserMenu />
         </div>
       </div>
 

@@ -34,25 +34,36 @@ export default function ProjectCard({ project, viewMode = "grid", onOpenDocs, on
 
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-gray-400" />
-            <span className="truncate">Atualizado em {new Date(project.updatedAt).toLocaleDateString("pt-BR")}</span>
+            <span className="truncate">
+              Atualizado em {new Date(project.updatedAt).toLocaleDateString("pt-BR")}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* actions */}
-      <div className={`mt-4 ${viewMode === "list" ? "md:mt-0 md:ml-6 md:shrink-0 md:w-48" : ""} flex gap-2`}>
+      {/* ALTERAÇÃO AQUI: 
+        Adicionado 'md:flex-col' quando viewMode é 'list'.
+        Isso empilha os botões verticalmente na lateral em vez de espremê-los numa linha.
+      */}
+      <div 
+        className={`mt-2 flex gap-2 ${
+          viewMode === "list" 
+            ? "md:mt-0 md:ml-6 md:shrink-0 md:w-40 md:flex-col" 
+            : ""
+        }`}
+      >
         <a
           href={project.repositoryUrl}
           target="_blank"
           rel="noreferrer"
-          className="flex-1 flex items-center justify-center gap-2 bg-[#2a3142] hover:bg-[#384054] text-gray-300 font-medium py-2 rounded-lg transition text-sm"
+          className="flex-1 flex items-center justify-center gap-2 bg-[#2a3142] hover:bg-[#384054] text-gray-300 font-medium py-2 px-2 rounded-lg transition text-sm"
         >
           <Code className="w-4 h-4" /> Ver Código
         </a>
 
         <button
           onClick={onOpenDocs}
-          className="flex-1 flex items-center justify-center gap-2 bg-[#2a3142] hover:bg-[#384054] text-gray-300 font-medium py-2 rounded-lg transition text-sm"
+          className="flex-1 flex items-center justify-center gap-2 bg-[#2a3142] hover:bg-[#384054] text-gray-300 font-medium py-2 px-2 rounded-lg transition text-sm"
           aria-label={`Abrir documentação de ${project.name}`}
         >
           <FileText className="w-4 h-4" /> Docs
@@ -60,11 +71,11 @@ export default function ProjectCard({ project, viewMode = "grid", onOpenDocs, on
 
         <button
           onClick={onDelete}
-          className="flex items-center justify-center gap-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 font-medium py-2 px-3 rounded-lg transition text-sm"
+          className="flex items-center justify-center gap-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 font-medium py-2 px-2 rounded-lg transition text-sm flex-1 md:flex-none md:h-10" // Ajuste opcional para altura no modo lista
           aria-label={`Excluir ${project.name}`}
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-            <path d="M6 7h12v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h3v2H3V4h3l1-1z"/>
+            <path d="M6 7h12v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h3v2H3V4h3l1-1z" />
           </svg>
         </button>
       </div>
@@ -72,7 +83,6 @@ export default function ProjectCard({ project, viewMode = "grid", onOpenDocs, on
   );
 }
 
-// Inline small status badge used inside card
 function StatusBadgeInline({ status }) {
   const classes = {
     pending: "bg-yellow-500/10 text-yellow-400 border-yellow-500/30",
@@ -81,7 +91,11 @@ function StatusBadgeInline({ status }) {
     failed: "bg-red-500/10 text-red-400 border-red-500/30",
   };
   return (
-    <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full border ${classes[status] || "bg-gray-500/10 text-gray-400 border-gray-500/30"}`}>
+    <span
+      className={`text-xs font-medium px-2.5 py-0.5 rounded-full border ${
+        classes[status] || "bg-gray-500/10 text-gray-400 border-gray-500/30"
+      }`}
+    >
       {status || "Indefinido"}
     </span>
   );

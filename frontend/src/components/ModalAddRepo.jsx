@@ -1,3 +1,4 @@
+// src/components/ModalAddRepo.jsx
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
@@ -19,9 +20,15 @@ export default function ModalAddRepo({ isOpen, onClose, onProjectAdded }) {
     e.preventDefault();
     setLoading(true);
     try {
-      await api.post("/api/projects", formData);
-      await onProjectAdded?.();
+      // 1. Recebemos a resposta do back-end contendo o novo projeto criado
+      const { data } = await api.post("/api/projects", formData);
+      
+      // 2. Passamos esse DADO para o pai, não apenas o sinal de vazio
+      await onProjectAdded?.(data);
+      
       onClose();
+      // Limpar form opcional
+      setFormData({ name: "", repositoryUrl: "", description: "", language: "" });
     } catch (error) {
       console.error("Erro ao adicionar projeto:", error);
       alert("Erro ao adicionar projeto. Veja o console.");

@@ -41,11 +41,6 @@ export default function Sidebar({ onAddRepo }) {
             sub="Visualizar docs geradas"
           />
           <SidebarItem
-            icon={<MessageSquare />}
-            label="Chat com IA"
-            sub="Conversar sobre o código"
-          />
-          <SidebarItem
             icon={<Settings />}
             label="Configurações"
             sub="Preferências do sistema"

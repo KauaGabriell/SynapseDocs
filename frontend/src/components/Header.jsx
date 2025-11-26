@@ -44,7 +44,7 @@ export default function Header({ onAddRepo }) {
           {open && (
             <div
               className="absolute right-0 mt-3 w-44 bg-[#1C1F2A]
-              border border-[#2C2C3C] rounded-xl shadow-xl z-[9999]
+              border border-[#2C2C3C] rounded-xl shadow-xl z-9999
               animate-fadeIn p-2"
             >
               <div className="flex flex-col">

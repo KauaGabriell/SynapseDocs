@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Github } from 'lucide-react';
 import Logo from '../assets/imgs/logo.png';
 
+
 function Login() {
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -105,7 +107,7 @@ function Login() {
         {/* SÓ GITHUB */}
         <div className="grid grid-cols-1">
           <a
-            href="http://localhost:3030/api/auth/github"
+            href={`${API_URL}/api/auth/github`}
             className="flex items-center justify-center gap-2 rounded-lg bg-[#0f1419] border border-gray-700/50 py-2.5 text-sm text-gray-300 font-medium hover:bg-gray-800/50 hover:border-gray-600 transition-all"
           >
             <Github className="h-4 w-4" />

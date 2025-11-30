@@ -1,29 +1,39 @@
 // src/models/ApiDocumentation.js
-
-// 1. Importamos 'DataTypes'
 import { DataTypes } from 'sequelize';
 
-// 2. Exportamos a função
 export default (sequelize) => {
-  const ApiDocumentation = sequelize.define('ApiDocumentation', {
-    id_apiDocumentations: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-      field: 'id_apiDocumentations' // Nome exato da coluna 
+  const ApiDocumentation = sequelize.define(
+    'ApiDocumentation',
+    {
+      id_apiDocumentations: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+        field: 'id_apiDocumentations',
+      },
+      id_project: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'projects',
+          key: 'id_projects',
+        },
+        onDelete: 'CASCADE',
+      },
+      content: {
+        type: DataTypes.JSON,
+        allowNull: true,
+      },
+      version: {
+        type: DataTypes.STRING(10),
+        allowNull: true,
+      },
     },
-    content: {
-      type: DataTypes.JSON, 
-      allowNull: true,      // Pode começar nulo antes da IA processar
+    {
+      tableName: 'api_documentations',
+      updatedAt: false,
     },
-    version: {
-      type: DataTypes.STRING(10),
-      allowNull: true,
-    },
-  }, {
-    tableName: 'api_documentations', // Nome exato da tabela
-    updatedAt: false, 
-  });
+  );
 
   return ApiDocumentation;
 };

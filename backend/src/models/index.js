@@ -1,59 +1,47 @@
-import dbConfig from '../config/database.js' //Importanto as configs do banco
-import { Sequelize } from 'sequelize'
+import 'dotenv/config';
+import Sequelize from 'sequelize';
+import dbConfig from '../config/database.js';
 
-/**Importando os models Criados */
-import UserModels from './UserModels.js'
-import ProjectModels from './ProjectModels.js'
-import ApiDocumentationModel from './ApiDocumentationModel.js'
-import ProjectDocumentationLinkModels from './ProjectDocumentationLinkModels.js'
+// Importa os modelos
+import UserModel from './UserModels.js';
+import ProjectModel from './ProjectModels.js';
+import ApiDocumentationModel from './ApiDocumentationModel.js';
 
-const db = {}; // Cria um objeto vazio para armazenar os modelos
-
-//Inicia a conexão do Sequelize
+const db = {};
 const sequelize = new Sequelize(
-    dbConfig.database,
-    dbConfig.username,
-    dbConfig.password,
-    dbConfig
-)
+  dbConfig.database,
+  dbConfig.username,
+  dbConfig.password,
+  dbConfig,
+);
 
-//Carrega o nosso objeto db vazio com os Models que criamos
-db.User = UserModels(sequelize, Sequelize.DataTypes);
-db.Project = ProjectModels(sequelize, Sequelize.DataTypes);
+// Carrega os modelos
+db.User = UserModel(sequelize, Sequelize.DataTypes);
+db.Project = ProjectModel(sequelize, Sequelize.DataTypes);
 db.ApiDocumentation = ApiDocumentationModel(sequelize, Sequelize.DataTypes);
-db.ProjectDocumentationLink = ProjectDocumentationLinkModels(sequelize, Sequelize.DataTypes);
 
-/**Relações entre as tabelas do banco */
+// --- DEFINIÇÃO DAS RELAÇÕES ---
+
+// 1. User <-> Project
 db.User.hasMany(db.Project, {
-  foreignKey: { 
-    name: 'id_user', // Nome da coluna na tabela 'projects'
-    allowNull: false
-  }
+  foreignKey: { name: 'id_user', allowNull: false },
 });
-// Cada projeto pertence apenas a um usuário.
 db.Project.belongsTo(db.User, {
-  foreignKey: {
-    name: 'id_user',
-    allowNull: false
-  }
+  foreignKey: { name: 'id_user', allowNull: false },
 });
 
-// Relação 1-para-1: Project <-> ApiDocumentation (via Tabela de Ligação)
-// Cada projeto tem uma documentação.
-db.Project.belongsToMany(db.ApiDocumentation, {
-  through: db.ProjectDocumentationLink,
+// 2. Project <-> ApiDocumentation (1-para-1)
+// AQUI ESTÁ A DEFINIÇÃO:
+db.Project.hasOne(db.ApiDocumentation, {
   foreignKey: 'id_project',
-  uniqueKey: 'project_api_unique' // Garante que a relação é 1-para-1
-});
-// Cada Documentação pertence a um único projeto.
-db.ApiDocumentation.belongsToMany(db.Project, {
-  through: db.ProjectDocumentationLink,
-  foreignKey: 'id_apiDocumentation',
-  uniqueKey: 'api_project_unique' // Garante que a relação é 1-para-1
+  as: 'documentation', // <--- O apelido é definido aqui
 });
 
+db.ApiDocumentation.belongsTo(db.Project, {
+  foreignKey: 'id_project',
+  as: 'project',
+});
 
-//Exporta a conexão (sequelize) e o objeto 'db' (com os modelos).
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 

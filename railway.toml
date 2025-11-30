@@ -1,5 +1,8 @@
 [build]
-builder = "Dockerfile"
+builder = "dockerfile"
+buildCommand = ""
+dockerfilePath = "backend/Dockerfile"
 
 [deploy]
 workdir = "backend"
+startCommand = "node src/server.js"

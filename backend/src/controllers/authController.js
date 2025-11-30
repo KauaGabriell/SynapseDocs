@@ -61,14 +61,15 @@ authController.login = async (req, res) => {
 };
 
 authController.githubCallback = async function githubCallback(req, res) {
+  const frontendURL = process.env.FRONTEND_URL || 'http://localhost:5173';
   try {
     const payload = { id: req.user.id_user };
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: '30m',
     });
-    res.redirect(`http://localhost:5173/auth/callback?token=${token}`);
+    res.redirect(`${frontendURL}/auth/callback?token=${token}`);
   } catch (error) {
-    res.redirect(`http://localhost:5173/login-error`);
+    res.redirect(`${frontendURL}/login-error`);
   }
 };
 

@@ -9,6 +9,7 @@ import passport from 'passport'
 /**Importanto arquivos */
 import db from './models/index.js'
 import passportConfig from './config/passport.js'
+import { sessionConfig } from './config/sessionStore.js'
 import authRoutes from './routes/authRoutes.js'
 import projectRoutes from './routes/projectRoutes.js'
 import aiRoutes from './routes/aiRoutes.js'
@@ -16,29 +17,50 @@ import aiRoutes from './routes/aiRoutes.js'
 /**Inicializa a instância do Express */
 const app = express();
 
-const PORT = process.env.PORT /*Porta do servidor que vem do ENV */
+const PORT = process.env.PORT || 3000; /*Porta do servidor que vem do ENV */
 
-passportConfig(passport);
+// Configurar Passport apenas se as variáveis do GitHub estiverem presentes
+if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+    passportConfig(passport);
+    console.log('✅ GitHub OAuth configurado');
+} else {
+    console.warn('⚠️  GitHub OAuth não configurado (variáveis ausentes)');
+}
 
 /**Middlewares */ 
-app.use(cors()); //Faz com que o frontend faça requisições para o backend
+app.use(cors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    credentials: true
+})); //Faz com que o frontend faça requisições para o backend
+
 app.use(helmet()); //Adiciona camadas se segurança HTTP(Headers)
 app.use(express.json()); //Express entenda JSON
 app.use(express.urlencoded({extended: true}));
-app.use(session({
-    secret: process.env.JWT_SECRET,
-    resave: false,
-    saveUninitialized: false
-}));
+
+// Usar a configuração de session com store do Sequelize
+app.use(session(sessionConfig));
+
 app.use(passport.initialize());
 app.use(passport.session())
 
-
-
 /**Rota Teste de Saúde da Api */
 app.get('/api', (req, res) => {
-    res.json({message: 'API FUNCIONANDO'})
+    res.json({
+        message: 'API FUNCIONANDO',
+        environment: process.env.NODE_ENV || 'development',
+        database: db.sequelize ? 'connected' : 'disconnected',
+        timestamp: new Date().toISOString()
+    })
 })
+
+// Health check simplificado
+app.get('/health', (req, res) => {
+    res.json({ 
+        status: 'ok',
+        timestamp: new Date().toISOString()
+    })
+})
+
 //Rota de autenticação(/github e /github/callback);
 app.use('/api/auth', authRoutes);
 
@@ -48,15 +70,92 @@ app.use('/api/projects', projectRoutes);
 //Rotas de IA
 app.use('/api/ai', aiRoutes);
 
-/**Inicia o Servidor */
-app.listen(PORT, async () =>{
+// Tratamento de erros
+app.use((err, req, res, next) => {
+    console.error('❌ Erro:', err);
+    res.status(500).json({ 
+        error: 'Internal Server Error',
+        message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+    });
+});
+
+/**Função para inicializar o banco de dados */
+async function initializeDatabase() {
     try {
         await db.sequelize.authenticate();
-        await db.sequelize.sync({alter: true});
-        console.log('Base de dados carregada com sucesso!')
-        console.log(`Servidor rodando em: http://localhost:${PORT}`);
+        console.log('✅ Base de dados conectada com sucesso!');
+        
+        // Sincronizar apenas em desenvolvimento
+        if (process.env.NODE_ENV !== 'production') {
+            await db.sequelize.sync({ alter: true });
+            console.log('✅ Modelos sincronizados');
+        } else {
+            console.log('ℹ️  Modo produção: sincronização automática desabilitada');
+            console.log('💡 Execute migrations manualmente se necessário');
+        }
+        
+        return true;
     } catch (error) {
-        console.log(`Erro ao carregar base de dados: ${error}`)
+        console.error('❌ Erro ao conectar no banco de dados:', error.message);
+        console.error('💡 Verifique se:');
+        console.error('   1. DATABASE_URL está configurada no Railway');
+        console.error('   2. O banco MySQL foi adicionado ao projeto');
+        console.error('   3. As credenciais estão corretas');
+        
+        // Não encerrar o processo em produção, permitir que o servidor inicie
+        if (process.env.NODE_ENV === 'production') {
+            console.warn('⚠️  Servidor iniciando sem banco de dados');
+            return false;
+        }
+        
+        throw error;
     }
-})
+}
 
+/**Inicia o Servidor */
+async function startServer() {
+    try {
+        // Inicializar banco de dados
+        const dbConnected = await initializeDatabase();
+        
+        // Iniciar servidor (mesmo que o banco não conecte em produção)
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log('🚀 ================================');
+            console.log(`🚀 Servidor rodando na porta ${PORT}`);
+            console.log(`🚀 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+            console.log(`🚀 Banco de Dados: ${dbConnected ? '✅ Conectado' : '❌ Desconectado'}`);
+            console.log(`🚀 GitHub OAuth: ${process.env.GITHUB_CLIENT_ID ? '✅ Configurado' : '⚠️  Não configurado'}`);
+            console.log('🚀 ================================');
+        });
+        
+    } catch (error) {
+        console.error('❌ Erro fatal ao iniciar servidor:', error);
+        process.exit(1);
+    }
+}
+
+// Iniciar o servidor
+startServer();
+
+// Tratamento de sinais de encerramento
+process.on('SIGTERM', async () => {
+    console.log('👋 SIGTERM recebido, encerrando servidor graciosamente...');
+    try {
+        await db.sequelize.close();
+        console.log('✅ Conexão com banco de dados fechada');
+    } catch (error) {
+        console.error('❌ Erro ao fechar conexão:', error);
+    }
+    process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+    console.log('👋 SIGINT recebido, encerrando servidor graciosamente...');
+    try {
+        await db.sequelize.close();
+        console.log('✅ Conexão com banco de dados fechada');
+    } catch (error) {
+        console.error('❌ Erro ao fechar conexão:', error);
+    }
+    process.exit(0);
+});

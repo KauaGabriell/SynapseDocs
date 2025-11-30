@@ -1,7 +1,15 @@
 import React from "react";
 import { User, Calendar, FileText, Code } from "lucide-react";
 
-export default function ProjectCard({ project, viewMode = "grid", onOpenDocs, onDelete }) {
+export default function ProjectCard({
+  project,
+  viewMode = "grid",
+  onOpenDocs,
+  onDelete,
+}) {
+  const showProgress =
+    project.status === "pending" || project.status === "processing";
+
   return (
     <article
       className={`bg-[#1a1f2e] rounded-2xl p-6 border border-gray-800 hover:border-blue-500/50 transition-all shadow-lg flex flex-col ${
@@ -26,29 +34,51 @@ export default function ProjectCard({ project, viewMode = "grid", onOpenDocs, on
           {project.description || "Sem descrição"}
         </p>
 
-        <div className="flex items-center gap-3 text-sm text-gray-400 mb-3">
-          <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-gray-400" />
-            <span className="truncate">{project.author || "Desconhecido"}</span>
+        {/* 🔵🟡 PROGRESS BAR */}
+        {showProgress && (
+          <div className="w-full mb-4">
+            <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${
+                  project.status === "pending"
+                    ? "bg-yellow-400"
+                    : "bg-blue-500"
+                }`}
+                style={{
+                  width:
+                    project.status === "pending"
+                      ? "15%"
+                      : project.status === "processing"
+                      ? "65%"
+                      : "0%",
+                }}
+              ></div>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              {project.status === "pending"
+                ? "Aguardando início do processamento..."
+                : "Processando documentação..."}
+            </p>
           </div>
+        )}
 
+        <div className="flex items-center gap-3 text-sm text-gray-400 mb-3">
+        
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-gray-400" />
             <span className="truncate">
-              Atualizado em {new Date(project.updatedAt).toLocaleDateString("pt-BR")}
+              Atualizado em{" "}
+              {new Date(project.updatedAt).toLocaleDateString("pt-BR")}
             </span>
           </div>
         </div>
       </div>
 
-      {/* ALTERAÇÃO AQUI: 
-        Adicionado 'md:flex-col' quando viewMode é 'list'.
-        Isso empilha os botões verticalmente na lateral em vez de espremê-los numa linha.
-      */}
-      <div 
+      {/* BUTTONS */}
+      <div
         className={`mt-2 flex gap-2 ${
-          viewMode === "list" 
-            ? "md:mt-0 md:ml-6 md:shrink-0 md:w-40 md:flex-col" 
+          viewMode === "list"
+            ? "md:mt-0 md:ml-6 md:shrink-0 md:w-40 md:flex-col"
             : ""
         }`}
       >
@@ -71,10 +101,10 @@ export default function ProjectCard({ project, viewMode = "grid", onOpenDocs, on
 
         <button
           onClick={onDelete}
-          className="flex items-center justify-center gap-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 font-medium py-2 px-2 rounded-lg transition text-sm flex-1 md:flex-none md:h-10" // Ajuste opcional para altura no modo lista
+          className="flex items-center justify-center gap-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 font-medium py-2 px-2 rounded-lg transition text-sm flex-1 md:flex-none md:h-10"
           aria-label={`Excluir ${project.name}`}
         >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M6 7h12v12a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h3v2H3V4h3l1-1z" />
           </svg>
         </button>
@@ -93,7 +123,8 @@ function StatusBadgeInline({ status }) {
   return (
     <span
       className={`text-xs font-medium px-2.5 py-0.5 rounded-full border ${
-        classes[status] || "bg-gray-500/10 text-gray-400 border-gray-500/30"
+        classes[status] ||
+        "bg-gray-500/10 text-gray-400 border-gray-500/30"
       }`}
     >
       {status || "Indefinido"}

@@ -6,7 +6,7 @@ import {
   Settings,
   Zap,
 } from "lucide-react";
-import Logo from "../assets/imgs/Logo.png";
+import Logo from "../assets/imgs/logo.png";
 
 export default function Sidebar({ onAddRepo }) {
   return (

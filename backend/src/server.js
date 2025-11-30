@@ -11,6 +11,7 @@ import db from './models/index.js'
 import passportConfig from './config/passport.js'
 import authRoutes from './routes/authRoutes.js'
 import projectRoutes from './routes/projectRoutes.js'
+import aiRoutes from './routes/aiRoutes.js'
 
 /**Inicializa a instância do Express */
 const app = express();
@@ -42,13 +43,16 @@ app.get('/api', (req, res) => {
 app.use('/api/auth', authRoutes);
 
 //Rotas de projetos
-app.use('/api/projects', projectRoutes)
+app.use('/api/projects', projectRoutes);
+
+//Rotas de IA
+app.use('/api/ai', aiRoutes);
 
 /**Inicia o Servidor */
 app.listen(PORT, async () =>{
     try {
         await db.sequelize.authenticate();
-        await db.sequelize.sync({force: true});
+        await db.sequelize.sync({alter: true});
         console.log('Base de dados carregada com sucesso!')
         console.log(`Servidor rodando em: http://localhost:${PORT}`);
     } catch (error) {

@@ -1,11 +1,23 @@
-import express from 'express';
+import { Router } from 'express';
 import passport from 'passport';
 import authController from '../controllers/authController.js';
-const router = express.Router();
 
+const router = Router();
 
+// Login manual
+router.post('/login', authController.login);
 
-router.get('/github',passport.authenticate('github', { scope: ['user:email'] })); //Redireciona da aplicação para o Github
-router.get('/github/callback' ,passport.authenticate('github', {failureRedirect: '/', failureMessage: true,}), authController.githubCallback); //Redireciona do Github para a aplicação de volta.
+// Registro manual
+router.post('/register', authController.register);
+
+// GitHub Login
+router.get('/github', passport.authenticate('github', { scope: ['user:email'] }));
+
+// GitHub Callback
+router.get(
+  '/github/callback',
+  passport.authenticate('github', { failureRedirect: 'http://localhost:5173/login-error' }),
+  authController.githubCallback
+);
 
 export default router;

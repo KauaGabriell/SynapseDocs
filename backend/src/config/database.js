@@ -7,6 +7,7 @@ export default {
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
   dialect: process.env.DB_DIALECT || 'mysql',
+  logging: false,
 
   define: {
     underscored: true,

@@ -1,8 +1,11 @@
 [build]
 builder = "dockerfile"
+
+# Caminho do Dockerfile
 dockerfilePath = "backend/Dockerfile"
+
+# Contexto do Docker (ESSENCIAL)
 context = "backend"
 
 [deploy]
-workdir = "backend"
 startCommand = "node src/server.js"

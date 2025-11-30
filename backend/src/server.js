@@ -9,6 +9,7 @@ import passport from 'passport'
 /**Importanto arquivos */
 import db from './models/index.js'
 import passportConfig from './config/passport.js'
+import { sessionConfig } from './config/sessionStore.js'
 import authRoutes from './routes/authRoutes.js'
 import projectRoutes from './routes/projectRoutes.js'
 import aiRoutes from './routes/aiRoutes.js'
@@ -36,18 +37,8 @@ app.use(helmet()); //Adiciona camadas se segurança HTTP(Headers)
 app.use(express.json()); //Express entenda JSON
 app.use(express.urlencoded({extended: true}));
 
-app.use(session({
-    secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || 'dev-secret-change-me',
-    resave: false,
-    saveUninitialized: false,
-    proxy: true, // Importante para Railway
-    cookie: {
-        secure: process.env.NODE_ENV === 'production', // HTTPS apenas em produção
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000, // 24 horas
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
-    }
-}));
+// Usar a configuração de session com store do Sequelize
+app.use(session(sessionConfig));
 
 app.use(passport.initialize());
 app.use(passport.session())

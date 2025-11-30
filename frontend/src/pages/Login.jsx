@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Github } from 'lucide-react';
-import Logo from '../assets/imgs/Logo.png';
+import Logo from '../assets/imgs/logo.png';
 
 function Login() {
   const navigate = useNavigate();

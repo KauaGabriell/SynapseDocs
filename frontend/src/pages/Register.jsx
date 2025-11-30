@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Github } from 'lucide-react';
-import Logo from '../assets/imgs/Logo.png';
+import Logo from '../assets/imgs/logo.png';
 
 function Register() {
   const navigate = useNavigate();

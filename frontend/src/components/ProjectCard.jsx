@@ -63,7 +63,13 @@ export default function ProjectCard({
         )}
 
         <div className="flex items-center gap-3 text-sm text-gray-400 mb-3">
-        
+          <div className="flex items-center gap-2">
+            <User className="w-4 h-4 text-gray-400" />
+            <span className="truncate">
+              {project.author || "Desconhecido"}
+            </span>
+          </div>
+
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-gray-400" />
             <span className="truncate">

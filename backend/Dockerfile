@@ -1,13 +1,21 @@
-FROM node:20-alpine
+FROM node:18-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
+# Copiar apenas o package.json do backend primeiro
+COPY backend/package*.json ./
+
+# Instalar dependências
 RUN npm install --production
 
-COPY . .
+# Copiar o código do backend
+COPY backend ./
 
-ENV PORT=3030
-EXPOSE 3030
+# Build do projeto (se houver TypeScript)
+RUN npm run build || echo "No build script found, skipping..."
 
+# Expor a porta (Railway usa a variável PORT automaticamente)
+EXPOSE 3000
+
+# Comando para iniciar
 CMD ["npm", "start"]

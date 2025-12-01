@@ -1,5 +1,8 @@
 FROM node:18-alpine
 
+# Instalar Git e outras dependências necessárias
+RUN apk add --no-cache git openssh-client
+
 WORKDIR /app
 
 # Copiar apenas o package.json do backend primeiro

@@ -6,7 +6,7 @@ import axios from 'axios';
 
 // --- 🛠️ MOCK DO SERVIÇO DE API (Para funcionar neste ambiente) ---
 // No seu projeto real, mantenha o import api from '../services/api';
-const baseURL = import.meta.env.VITE_API_URL; // Ajuste conforme necessário
+const baseURL = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, ''); // Ajuste conforme necessário
 
 const api = axios.create({
   baseURL: baseURL,
@@ -14,7 +14,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -69,7 +69,7 @@ function Register() {
 
     try {
       // ✅ Rota ajustada para /signup para evitar bloqueadores de anúncio
-      const { data } = await api.post('/auth/signup', {
+      const { data } = await api.post('/api/auth/signup', {
         username: formData.username,
         email: formData.email,
         password: formData.password,
@@ -77,11 +77,10 @@ function Register() {
 
       localStorage.setItem('token', data.token);
       navigate('/dashboard', { replace: true });
-
     } catch (error) {
-      console.error("Erro no registro:", error);
+      console.error('Erro no registro:', error);
       const message = error.response?.data?.message || 'Erro ao criar conta';
-      
+
       setErrors({
         submit: message,
       });
@@ -122,14 +121,18 @@ function Register() {
         {/* Mensagem de erro global */}
         {errors.submit && (
           <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/50 px-4 py-3 animate-pulse">
-            <p className="text-sm text-red-400 font-medium text-center">{errors.submit}</p>
+            <p className="text-sm text-red-400 font-medium text-center">
+              {errors.submit}
+            </p>
           </div>
         )}
 
         {/* Formulário */}
         <form onSubmit={handleSubmit} className="space-y-4 mb-5">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">Nome</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              Nome
+            </label>
             <input
               type="text"
               name="username"
@@ -137,7 +140,9 @@ function Register() {
               onChange={handleChange}
               placeholder="Seu nome"
               className={`w-full rounded-lg border ${
-                errors.username ? 'border-red-500 focus:border-red-500' : 'border-gray-700/50 focus:border-purple-500'
+                errors.username
+                  ? 'border-red-500 focus:border-red-500'
+                  : 'border-gray-700/50 focus:border-purple-500'
               } bg-[#0f1419] px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none transition-all duration-200`}
             />
             {errors.username && (
@@ -146,7 +151,9 @@ function Register() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              Email
+            </label>
             <input
               type="email"
               name="email"
@@ -154,7 +161,9 @@ function Register() {
               onChange={handleChange}
               placeholder="dev@exemplo.com"
               className={`w-full rounded-lg border ${
-                errors.email ? 'border-red-500 focus:border-red-500' : 'border-gray-700/50 focus:border-purple-500'
+                errors.email
+                  ? 'border-red-500 focus:border-red-500'
+                  : 'border-gray-700/50 focus:border-purple-500'
               } bg-[#0f1419] px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none transition-all duration-200`}
             />
             {errors.email && (
@@ -163,7 +172,9 @@ function Register() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1.5">Senha</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              Senha
+            </label>
             <input
               type="password"
               name="password"
@@ -171,7 +182,9 @@ function Register() {
               onChange={handleChange}
               placeholder="••••••••"
               className={`w-full rounded-lg border ${
-                errors.password ? 'border-red-500 focus:border-red-500' : 'border-gray-700/50 focus:border-purple-500'
+                errors.password
+                  ? 'border-red-500 focus:border-red-500'
+                  : 'border-gray-700/50 focus:border-purple-500'
               } bg-[#0f1419] px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none transition-all duration-200`}
             />
             {errors.password && (
@@ -190,7 +203,9 @@ function Register() {
               onChange={handleChange}
               placeholder="••••••••"
               className={`w-full rounded-lg border ${
-                errors.confirmPassword ? 'border-red-500 focus:border-red-500' : 'border-gray-700/50 focus:border-purple-500'
+                errors.confirmPassword
+                  ? 'border-red-500 focus:border-red-500'
+                  : 'border-gray-700/50 focus:border-purple-500'
               } bg-[#0f1419] px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none transition-all duration-200`}
             />
             {errors.confirmPassword && (
@@ -210,7 +225,9 @@ function Register() {
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 Criando conta...
               </span>
-            ) : 'Criar conta'}
+            ) : (
+              'Criar conta'
+            )}
           </button>
         </form>
 
@@ -225,7 +242,7 @@ function Register() {
 
         {/* Botão GitHub */}
         <a
-          href={`${baseURL}/auth/github`}
+          href={`${baseURL}/api/auth/github`}
           className="flex items-center justify-center gap-2 rounded-lg bg-[#0f1419] border border-gray-700/50 py-2.5 text-sm text-gray-300 font-medium hover:bg-white hover:text-black hover:border-white transition-all duration-300 mb-6 group"
         >
           <Github className="h-4 w-4 group-hover:text-black transition-colors" />

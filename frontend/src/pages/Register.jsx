@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Github, BrainCircuit } from 'lucide-react'; // Usando ícone do Lucide como Logo provisório
 import axios from 'axios';
+import Logo from '../assets/imgs/logo.png'
 
 // --- 🛠️ MOCK DO SERVIÇO DE API (Para funcionar neste ambiente) ---
 // No seu projeto real, mantenha o import api from '../services/api';
@@ -110,7 +111,7 @@ function Register() {
         <div className="mb-6 flex flex-col items-center">
           <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400">
             {/* Substituído imagem local por ícone para preview */}
-            <BrainCircuit className="h-10 w-10" />
+            <img src={Logo} alt="Logo SynapseDocs" className='h-16 w-16'/>
           </div>
           <h1 className="text-2xl font-bold text-white mb-1">SynapseDocs</h1>
           <p className="text-xs text-gray-400 text-center">

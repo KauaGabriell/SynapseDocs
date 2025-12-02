@@ -4,8 +4,8 @@ import authController from '../controllers/authController.js';
 
 const router = Router();
 
-// Login manual
-router.post('/login', authController.login);
+// Login manual (corrigido)
+router.post('/signin', authController.login);
 
 // Registro manual
 router.post('/signup', authController.register);

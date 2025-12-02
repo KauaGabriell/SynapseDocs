@@ -6,7 +6,7 @@ import axios from 'axios';
 
 // --- 🛠️ MOCK DO SERVIÇO DE API (Para funcionar neste ambiente) ---
 // No seu projeto real, mantenha o import api from '../services/api';
-const baseURL = 'http://localhost:3030/api'; // Ajuste conforme necessário
+const baseURL = import.meta.env.VITE_API_URL; // Ajuste conforme necessário
 
 const api = axios.create({
   baseURL: baseURL,

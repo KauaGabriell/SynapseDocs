@@ -100,7 +100,7 @@ export default function Dashboard() {
     const id = setInterval(() => {
       console.log('🔄 Atualizando projetos...');
       loadProjects(true);
-    }, 5000); // Aumentei para 5s (era 4s)
+    }, 5000);
 
     return () => {
       console.log('⏹️ Parando polling');
@@ -134,7 +134,7 @@ export default function Dashboard() {
     // ⚡ Sincronizar com backend em background (sem loading)
     setTimeout(() => {
       loadProjects(true);
-    }, 1000); // Delay de 1s para dar tempo do backend processar
+    }, 1000);
 
   }, [loadProjects]);
 
@@ -348,15 +348,18 @@ export default function Dashboard() {
         </p>
 
         {projects.length === 0 ? (
-          <div className="text-center py-12 bg-[#1a1f2e] rounded-2xl border border-gray-800">
-            <p className="text-gray-500 mb-4">Nenhum projeto encontrado.</p>
-            <button
-              onClick={() => setIsAddModalOpen(true)}
-              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              Adicionar Primeiro Projeto
-            </button>
+          /* ✅ NOVA ÁREA DE AVISO (Sem botão) */
+          <div className="flex flex-col items-center justify-center py-16 bg-[#1a1f2e] rounded-2xl border border-gray-800 select-none">
+            <Search className="w-10 h-10 text-gray-700 mb-3" />
+            
+            <p className="text-gray-400 font-medium text-lg">
+              Nenhum projeto encontrado
+            </p>
+            <p className="text-sm text-gray-600 mt-1">
+              {searchTerm || statusFilter !== 'all' 
+                ? "Tente ajustar seus filtros de busca."
+                : "A lista de repositórios está vazia."}
+            </p>
           </div>
         ) : (
           <div
@@ -417,7 +420,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      {/* ✅ ADD PROJECT MODAL - Passa callback corretamente */}
+      {/* ✅ ADD PROJECT MODAL */}
       <ModalAddRepo
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}

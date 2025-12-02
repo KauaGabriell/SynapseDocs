@@ -20,7 +20,7 @@ const router = createBrowserRouter([
   { path: '/login-error', element: <LoginError /> },
   { path: '/project/:id', element: <ProjectDetails /> },
   { path: '/project/:id/documentation', element: <DocumentationPage /> },
-  { path: '/register', element: <Register /> },
+  { path: '/signup', element: <Register /> },
 
   // --- Rotas Protegidas (dashboard + layout inteiro) ---
   {

@@ -7,21 +7,16 @@ const router = Router();
 // Protege todas as rotas
 router.use(authMiddleware);
 
-// GET /api/projects (Lista todos)
+// Rotas de Coleção
 router.get('/', projectController.getProjects);
-
-// POST /api/projects (Cria novo)
 router.post('/', projectController.addProjects);
 
-// GET /api/projects/:id (Detalhes de um projeto específico)
-// Ex: /api/projects/1
-router.get('/:id', projectController.getProjectById);
-
-// routes/projectRoutes.js
-// import já existente e authMiddleware
-router.get('/:id/documentation', projectController.getDocumentation);
+// Rotas de Item (com ID)
+// A rota de deletar que estava faltando ou dando erro 404
 router.delete('/:id', projectController.deleteProject);
 
-
+// Outras rotas específicas
+router.get('/:id', projectController.getProjectById);
+router.get('/:id/documentation', projectController.getDocumentation);
 
 export default router;

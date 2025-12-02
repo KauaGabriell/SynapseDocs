@@ -8,7 +8,7 @@ const router = Router();
 router.post('/login', authController.login);
 
 // Registro manual
-router.post('/register', authController.register);
+router.post('/signup', authController.register);
 
 // GitHub Login
 router.get('/github', passport.authenticate('github', { scope: ['user:email'] }));

@@ -1,8 +1,26 @@
 // frontend/src/pages/Register.jsx
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Github } from 'lucide-react';
-import Logo from '../assets/imgs/logo.png';
+import { Github, BrainCircuit } from 'lucide-react'; // Usando ícone do Lucide como Logo provisório
+import axios from 'axios';
+
+// --- 🛠️ MOCK DO SERVIÇO DE API (Para funcionar neste ambiente) ---
+// No seu projeto real, mantenha o import api from '../services/api';
+const baseURL = 'http://localhost:3030/api'; // Ajuste conforme necessário
+
+const api = axios.create({
+  baseURL: baseURL,
+  timeout: 30000,
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+// ------------------------------------------------------------------
 
 function Register() {
   const navigate = useNavigate();
@@ -50,32 +68,22 @@ function Register() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:3030/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          email: formData.email,
-          password: formData.password,
-        }),
+      // ✅ Rota ajustada para /signup para evitar bloqueadores de anúncio
+      const { data } = await api.post('/auth/signup', {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Erro ao criar conta');
-      }
-
-      // Salva o token no localStorage
       localStorage.setItem('token', data.token);
-
-      // Redireciona para o dashboard
       navigate('/dashboard', { replace: true });
+
     } catch (error) {
+      console.error("Erro no registro:", error);
+      const message = error.response?.data?.message || 'Erro ao criar conta';
+      
       setErrors({
-        submit: error.message || 'Erro ao criar conta',
+        submit: message,
       });
     } finally {
       setIsLoading(false);
@@ -88,7 +96,6 @@ function Register() {
       ...prev,
       [name]: value,
     }));
-    // Limpa o erro do campo quando o usuário começa a digitar
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
@@ -99,29 +106,30 @@ function Register() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0f1419]">
-      <div className="w-full max-w-[420px] rounded-2xl bg-[#1a1f2e]/80 backdrop-blur-xl p-8">
+      <div className="w-full max-w-[420px] rounded-2xl bg-[#1a1f2e]/80 backdrop-blur-xl p-8 shadow-2xl border border-gray-800">
         {/* Logo e Título */}
         <div className="mb-6 flex flex-col items-center">
-          <div className="mb-3 flex h-18 w-18 items-center justify-center rounded-xl">
-            <img src={Logo} alt="Logo SynapseDocs" className="h-18 w-18" />
-            <h1 className="text-2xl font-bold text-white mb-1">SynapseDocs</h1>
+          <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400">
+            {/* Substituído imagem local por ícone para preview */}
+            <BrainCircuit className="h-10 w-10" />
           </div>
+          <h1 className="text-2xl font-bold text-white mb-1">SynapseDocs</h1>
           <p className="text-xs text-gray-400 text-center">
             Crie sua conta e comece a documentar suas APIs
           </p>
         </div>
 
-        {/* Mensagem de erro */}
+        {/* Mensagem de erro global */}
         {errors.submit && (
-          <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/50 px-4 py-3">
-            <p className="text-sm text-red-400">{errors.submit}</p>
+          <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/50 px-4 py-3 animate-pulse">
+            <p className="text-sm text-red-400 font-medium text-center">{errors.submit}</p>
           </div>
         )}
 
         {/* Formulário */}
-        <form onSubmit={handleSubmit} className="space-y-3 mb-3">
+        <form onSubmit={handleSubmit} className="space-y-4 mb-5">
           <div>
-            <label className="block text-sm text-gray-300 mb-1.5">Nome</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">Nome</label>
             <input
               type="text"
               name="username"
@@ -129,8 +137,8 @@ function Register() {
               onChange={handleChange}
               placeholder="Seu nome"
               className={`w-full rounded-lg border ${
-                errors.username ? 'border-red-500' : 'border-gray-700/50'
-              } bg-[#0f1419] px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors`}
+                errors.username ? 'border-red-500 focus:border-red-500' : 'border-gray-700/50 focus:border-purple-500'
+              } bg-[#0f1419] px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none transition-all duration-200`}
             />
             {errors.username && (
               <p className="mt-1 text-xs text-red-400">{errors.username}</p>
@@ -138,7 +146,7 @@ function Register() {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-300 mb-1.5">Email</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">Email</label>
             <input
               type="email"
               name="email"
@@ -146,8 +154,8 @@ function Register() {
               onChange={handleChange}
               placeholder="dev@exemplo.com"
               className={`w-full rounded-lg border ${
-                errors.email ? 'border-red-500' : 'border-gray-700/50'
-              } bg-[#0f1419] px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors`}
+                errors.email ? 'border-red-500 focus:border-red-500' : 'border-gray-700/50 focus:border-purple-500'
+              } bg-[#0f1419] px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none transition-all duration-200`}
             />
             {errors.email && (
               <p className="mt-1 text-xs text-red-400">{errors.email}</p>
@@ -155,7 +163,7 @@ function Register() {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-300 mb-1.5">Senha</label>
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">Senha</label>
             <input
               type="password"
               name="password"
@@ -163,8 +171,8 @@ function Register() {
               onChange={handleChange}
               placeholder="••••••••"
               className={`w-full rounded-lg border ${
-                errors.password ? 'border-red-500' : 'border-gray-700/50'
-              } bg-[#0f1419] px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors`}
+                errors.password ? 'border-red-500 focus:border-red-500' : 'border-gray-700/50 focus:border-purple-500'
+              } bg-[#0f1419] px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none transition-all duration-200`}
             />
             {errors.password && (
               <p className="mt-1 text-xs text-red-400">{errors.password}</p>
@@ -172,7 +180,7 @@ function Register() {
           </div>
 
           <div>
-            <label className="block text-sm text-gray-300 mb-1.5">
+            <label className="block text-sm font-medium text-gray-300 mb-1.5">
               Confirmar Senha
             </label>
             <input
@@ -182,8 +190,8 @@ function Register() {
               onChange={handleChange}
               placeholder="••••••••"
               className={`w-full rounded-lg border ${
-                errors.confirmPassword ? 'border-red-500' : 'border-gray-700/50'
-              } bg-[#0f1419] px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 transition-colors`}
+                errors.confirmPassword ? 'border-red-500 focus:border-red-500' : 'border-gray-700/50 focus:border-purple-500'
+              } bg-[#0f1419] px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none transition-all duration-200`}
             />
             {errors.confirmPassword && (
               <p className="mt-1 text-xs text-red-400">
@@ -195,36 +203,41 @@ function Register() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-lg bg-linear-to-r from-[#7c3aed] to-[#3b82f6] py-2.5 text-sm font-semibold text-white shadow-lg hover:shadow-purple-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded-lg bg-linear-to-r from-purple-600 to-blue-600 py-3 text-sm font-bold text-white shadow-lg hover:shadow-purple-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            {isLoading ? 'Criando conta...' : 'Criar conta'}
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Criando conta...
+              </span>
+            ) : 'Criar conta'}
           </button>
         </form>
 
         {/* Divisor */}
-        <div className="my-5 flex items-center">
+        <div className="my-6 flex items-center relative">
           <div className="flex-1 border-t border-gray-700/50"></div>
-          <span className="mx-3 text-xs text-gray-500 font-medium">
-            OU CONTINUE COM
+          <span className="mx-3 text-[10px] tracking-widest text-gray-500 font-bold uppercase bg-[#1a1f2e] px-2 z-10">
+            ou continue com
           </span>
           <div className="flex-1 border-t border-gray-700/50"></div>
         </div>
 
         {/* Botão GitHub */}
         <a
-          href="http://localhost:3030/api/auth/github"
-          className="flex items-center justify-center gap-2 rounded-lg bg-[#0f1419] border border-gray-700/50 py-2.5 text-sm text-gray-300 font-medium hover:bg-gray-800/50 hover:border-gray-600 transition-all mb-5"
+          href={`${baseURL}/auth/github`}
+          className="flex items-center justify-center gap-2 rounded-lg bg-[#0f1419] border border-gray-700/50 py-2.5 text-sm text-gray-300 font-medium hover:bg-white hover:text-black hover:border-white transition-all duration-300 mb-6 group"
         >
-          <Github className="h-4 w-4" />
+          <Github className="h-4 w-4 group-hover:text-black transition-colors" />
           <span>GitHub</span>
         </a>
 
         {/* Link para login */}
-        <div className="text-center text-xs text-gray-400">
+        <div className="text-center text-sm text-gray-400">
           Já tem uma conta?{' '}
           <Link
             to="/"
-            className="text-purple-400 hover:text-purple-300 transition-colors font-medium"
+            className="text-purple-400 hover:text-purple-300 transition-colors font-medium hover:underline"
           >
             Faça login
           </Link>

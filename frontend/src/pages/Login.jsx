@@ -122,7 +122,7 @@ function Login() {
           </a>
           <span>·</span>
           <a
-            href="/register"
+            href="/signup"
             className="hover:text-purple-400 transition-colors"
           >
             Não tem uma conta?

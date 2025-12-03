@@ -11,20 +11,18 @@ const __dirname = path.dirname(__filename);
 const tmpPath = path.join(__dirname, '../../tmp');
 const git = simpleGit();
 
-
+// Configuração do Gemini
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ 
-  model: "gemini-2.5-flash", 
+  model: "gemini-1.5-flash", 
   generationConfig: {
     responseMimeType: "application/json",
     temperature: 0.2,
-    topP: 0.95,
-    topK: 40,
     maxOutputTokens: 8192,
   }
 });
 
-// --- Função Auxiliar: Detectar Framework ---
+// --- Funções Auxiliares de Arquivo e Framework ---
 function detectFramework(files) {
   const packageJsonFile = files.find(f => f.name === 'package.json');
   const requirementsFile = files.find(f => f.name === 'requirements.txt');
@@ -33,67 +31,34 @@ function detectFramework(files) {
     try {
       const pkg = JSON.parse(packageJsonFile.content);
       const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-      
       if (deps.express) return { framework: 'Express', language: 'JavaScript' };
       if (deps.fastify) return { framework: 'Fastify', language: 'JavaScript' };
       if (deps['@nestjs/core']) return { framework: 'NestJS', language: 'TypeScript' };
-    } catch (e) {
-      console.warn('Erro ao parsear package.json');
-    }
+    } catch (e) {}
   }
-  
-  if (requirementsFile) {
-    if (requirementsFile.content.includes('fastapi')) {
-      return { framework: 'FastAPI', language: 'Python' };
-    }
-    if (requirementsFile.content.includes('flask')) {
-      return { framework: 'Flask', language: 'Python' };
-    }
-  }
-  
   return { framework: 'Desconhecido', language: 'JavaScript' };
 }
 
-// --- Função Auxiliar: Ler Arquivos com Priorização ---
 async function getProjectFiles(dir) {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   const files = [];
-  
-  // Pastas a ignorar
-  const ignoredDirs = [
-    'node_modules', '.git', 'dist', 'build', 'coverage', 
-    '.idea', '.vscode', '__pycache__', 'venv', '.env'
-  ];
-  
-  // Extensões prioritárias (rotas e configurações)
-  const priorityExtensions = [
-    '.route.js', '.routes.js', 'router.js', 'routes.js',
-    '.controller.js', '.api.js', 'main.py', 'app.py'
-  ];
+  const ignoredDirs = ['node_modules', '.git', 'dist', 'build', 'coverage', '.idea', '.vscode', '__pycache__', 'venv', '.env'];
+  const priorityExtensions = ['.route.js', '.routes.js', 'router.js', 'routes.js', '.controller.js', '.api.js', 'main.py', 'app.py'];
 
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
-    
     if (entry.isDirectory()) {
       if (ignoredDirs.includes(entry.name)) continue;
       files.push(...(await getProjectFiles(fullPath)));
     } else {
-      // Filtrar arquivos relevantes
       const validExtensions = /\.(js|ts|jsx|tsx|json|py)$/;
       const isLockFile = entry.name.includes('lock');
-      const isConfigOnly = /^(\.env|\.gitignore|\.eslintrc)/.test(entry.name);
-      
-      if (!validExtensions.test(entry.name) || isLockFile || isConfigOnly) {
-        continue;
-      }
+      if (!validExtensions.test(entry.name) || isLockFile) continue;
       
       try {
         const content = await fs.readFile(fullPath, 'utf-8');
-        
-        // Limite de 100KB por arquivo
         if (content.length < 100000) {
           const isPriority = priorityExtensions.some(ext => entry.name.includes(ext));
-          
           files.push({
             path: fullPath,
             name: entry.name,
@@ -102,17 +67,44 @@ async function getProjectFiles(dir) {
             relativePath: fullPath.replace(dir, '').replace(/\\/g, '/')
           });
         }
-      } catch (e) {
-        console.warn(`⚠️  Erro ao ler ${entry.name}: ${e.message}`);
-      }
+      } catch (e) {}
     }
   }
-  
-  // Ordenar por prioridade (arquivos de rota primeiro)
   return files.sort((a, b) => a.priority - b.priority);
 }
 
-// --- Função Principal: Analisar Repositório ---
+// --- LÓGICA DE BATCH E MERGE ---
+
+function chunkArray(array, size) {
+  const result = [];
+  for (let i = 0; i < array.length; i += size) {
+    result.push(array.slice(i, i + size));
+  }
+  return result;
+}
+
+function mergeOpenApiSpecs(specs, projectName) {
+  const finalSpec = {
+    openapi: "3.0.0",
+    info: {
+      title: projectName,
+      version: "1.0.0",
+      description: "Documentação gerada automaticamente via SynapseDocs"
+    },
+    paths: {},
+    components: { schemas: {} }
+  };
+
+  specs.forEach(spec => {
+    if (!spec) return;
+    if (spec.paths) Object.assign(finalSpec.paths, spec.paths);
+    if (spec.components && spec.components.schemas) Object.assign(finalSpec.components.schemas, spec.components.schemas);
+  });
+
+  return finalSpec;
+}
+
+// --- Função Principal ---
 const analysisService = {};
 
 analysisService.analyzeRepository = async (project) => {
@@ -120,178 +112,126 @@ analysisService.analyzeRepository = async (project) => {
   const repoFolder = path.join(tmpPath, project.id_projects.toString());
 
   try {
-    // 1. Status: Clonando
-    await project.update({ 
-      status: 'processing', 
-      progress: 10, 
-      description: '📦 Clonando repositório...' 
-    });
-
-    // Limpeza e Clone
-    try { 
-      await fs.rm(repoFolder, { recursive: true, force: true }); 
-    } catch (e) {}
+    await project.update({ status: 'processing', progress: 10, description: '📦 Clonando repositório...' });
     
+    try { await fs.rm(repoFolder, { recursive: true, force: true }); } catch (e) {}
     await git.clone(project.repositoryUrl, repoFolder);
-    console.log('✅ Repositório clonado com sucesso');
-
-    // 2. Status: Lendo arquivos
-    await project.update({ 
-      progress: 30, 
-      description: '📂 Analisando estrutura do projeto...' 
-    });
-
+    
+    await project.update({ progress: 20, description: '📂 Lendo arquivos...' });
     const files = await getProjectFiles(repoFolder);
-    console.log(`📊 ${files.length} arquivos encontrados`);
-
-    if (files.length === 0) {
-      throw new Error("❌ Nenhum arquivo de código encontrado no repositório");
-    }
-
-    // 3. Detectar framework
+    
+    if (files.length === 0) throw new Error("❌ Nenhum arquivo de código encontrado");
+    
     const { framework, language } = detectFramework(files);
-    console.log(`🔧 Framework detectado: ${framework} (${language})`);
-
-    await project.update({ 
-      progress: 50, 
-      description: `🤖 Gerando documentação com IA (${framework})...`,
-      language: language
-    });
-
-    // 4. Construir Prompt Otimizado
-    const prompt = buildOptimizedPrompt(project.name, framework, language, files);
-
-    // 5. Chamar Gemini com retry
-    console.log('🚀 Enviando para Gemini...');
-    let attempt = 0;
-    let result;
     
-    while (attempt < 3) {
-      try {
-        result = await model.generateContent(prompt);
-        break;
-      } catch (error) {
-        attempt++;
-        console.error(`⚠️  Tentativa ${attempt} falhou:`, error.message);
-        if (attempt === 3) throw error;
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Aguarda 2s
+    // Batch: Processar 40 arquivos mais relevantes em lotes de 5
+    const relevantFiles = files.slice(0, 40); 
+    const batches = chunkArray(relevantFiles, 5); 
+    const partialSpecs = [];
+    
+    console.log(`⚡ Iniciando processamento em ${batches.length} lotes...`);
+
+    for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i];
+      const progress = 30 + Math.floor((i / batches.length) * 50);
+      
+      await project.update({ 
+        progress: progress, 
+        description: `🤖 Analisando lote ${i + 1}/${batches.length} (${framework})...` 
+      });
+
+      // Prompt que força PT-BR
+      const prompt = buildBatchPrompt(project.name, framework, language, batch);
+      
+      let attempt = 0;
+      while (attempt < 3) {
+        try {
+          const result = await model.generateContent(prompt);
+          const response = await result.response;
+          let text = response.text();
+          text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+          
+          const jsonPart = JSON.parse(text);
+          partialSpecs.push(jsonPart);
+          console.log(`✅ Lote ${i + 1} processado com sucesso.`);
+          break;
+        } catch (error) {
+          attempt++;
+          console.error(`⚠️ Falha no lote ${i + 1}:`, error.message);
+          if (attempt === 3) console.error(`❌ Pulando lote ${i + 1}.`);
+          await new Promise(r => setTimeout(r, 2000));
+        }
       }
     }
 
-    const response = await result.response;
-    let text = response.text();
-
-    text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    await project.update({ progress: 85, description: '🔄 Unificando documentação...' });
     
-    let jsonContent;
-    try {
-      jsonContent = JSON.parse(text);
-    } catch (parseError) {
-      console.error('❌ Erro ao parsear JSON.');
-      console.error('📉 Tamanho do texto recebido:', text.length);
-      console.error('🔚 Fim da resposta (para debug):', text.slice(-200)); // Mostra onde cortou
-
-      if (parseError.message.includes("Unexpected end of JSON input")) {
-         throw new Error('A IA excedeu o limite de memória e cortou a resposta. O projeto pode ser muito grande.');
-      }
-      throw new Error('A IA não retornou um JSON válido. Tente novamente.');
+    const finalJson = mergeOpenApiSpecs(partialSpecs, project.name);
+    
+    if (Object.keys(finalJson.paths).length === 0) {
+       throw new Error("Não foi possível identificar rotas nos arquivos analisados.");
     }
 
-    // 7. Validar estrutura OpenAPI básica
-    if (!jsonContent.openapi && !jsonContent.swagger) {
-      console.warn('⚠️  Resposta não está no formato OpenAPI, ajustando...');
-      jsonContent = {
-        openapi: "3.0.0",
-        info: {
-          title: project.name,
-          version: "1.0.0",
-          description: "Documentação gerada automaticamente"
-        },
-        paths: jsonContent.paths || jsonContent,
-        components: jsonContent.components || {}
-      };
-    }
-
-    console.log('✅ Documentação gerada com sucesso');
-
-    // 8. Salvar no Banco de Dados
-    await project.update({ 
-      progress: 90, 
-      description: '💾 Salvando documentação...' 
-    });
+    console.log(`💾 Salvando: ${Object.keys(finalJson.paths).length} rotas encontradas.`);
 
     await db.ApiDocumentation.create({
-      content: jsonContent,
+      content: finalJson,
       version: '1.0.0',
       id_project: project.id_projects
     });
 
-    // 9. Finalizar com sucesso
     await project.update({ 
       status: 'completed', 
-      progress: 100,
+      progress: 100, 
       language: language,
-      description: jsonContent.info?.description || 'Documentação OpenAPI gerada automaticamente'
+      description: `Documentação gerada com ${Object.keys(finalJson.paths).length} endpoints.`
     });
 
-    console.log('🎉 Análise concluída com sucesso!\n');
-
-    // Limpeza do diretório temporário
-    try {
-      await fs.rm(repoFolder, { recursive: true, force: true });
-    } catch (e) {}
+    console.log('🎉 Sucesso total!\n');
 
   } catch (err) {
-    console.error(`\n❌ [Análise] Erro:`, err);
-    
-    try {
-      await project.update({ 
-        status: 'failed', 
-        progress: 0,
-        description: `❌ Falha: ${err.message ? err.message.slice(0, 200) : 'Erro desconhecido'}`
-      });
-    } catch (dbError) {
-      console.error('💥 Erro crítico ao atualizar status:', dbError);
-    }
+    console.error(`❌ Erro Fatal:`, err);
+    await project.update({ status: 'failed', progress: 0, description: `Erro: ${err.message.slice(0, 200)}` });
+  } finally {
+    try { await fs.rm(repoFolder, { recursive: true, force: true }); } catch (e) {}
   }
 };
 
-// --- Função Auxiliar: Construir Prompt Otimizado ---
-function buildOptimizedPrompt(projectName, framework, language, files) {
-  // Limitar a 30 arquivos mais relevantes para evitar estouro de tokens
-  const relevantFiles = files.slice(0, 30);
-  
+// --- Prompt Ajustado para Português ---
+function buildBatchPrompt(projectName, framework, language, files) {
   let filesContent = '';
-  relevantFiles.forEach(file => {
-    // Reduzimos o separador para economizar tokens
-    filesContent += `\nFILE:${file.relativePath}\n${file.content}`;
+  files.forEach(file => {
+    filesContent += `\nFILE PATH: ${file.relativePath}\nCONTENT:\n${file.content}\n---`;
   });
 
   return `
-Role: Senior Software Engineer.
-Task: Analyze the code and generate a COMPLETE OpenAPI 3.0 specification in JSON format.
+Role: Senior API Documenter.
+Task: Analyze code files and extract OpenAPI 3.0 definitions.
 
-Project Info:
-- Name: ${projectName}
-- Framework: ${framework}
-- Language: ${language}
+Project: ${projectName} (${framework} / ${language})
 
 Instructions:
-1. Identify all HTTP endpoints, methods, parameters, and bodies.
-2. Create accurate schemas for request/response bodies.
-3. Be concise. Do not add conversational text.
-4. Output ONLY standard JSON.
+1. Return a JSON object with "paths" and "components".
+2. **IMPORTANT: All descriptions, summaries, and explanations MUST be in Portuguese (PT-BR).**
+3. Keep parameter names and technical keys in English/Code standard.
+4. Output ONLY valid JSON.
 
-Expected Structure (OpenAPI 3.0):
+Input Files:
+${filesContent}
+
+Expected JSON Structure:
 {
-  "openapi": "3.0.0",
-  "info": { "title": "${projectName}", "version": "1.0.0" },
-  "paths": { ... },
-  "components": { "schemas": { ... } }
-}
-
-Codebase:
-${filesContent}`;
+  "paths": {
+    "/rota": {
+      "get": {
+        "summary": "Descrição em Português aqui",
+        "description": "Detalhes em Português...",
+        ...
+      }
+    }
+  },
+  "components": { ... }
+}`;
 }
 
 export default analysisService;

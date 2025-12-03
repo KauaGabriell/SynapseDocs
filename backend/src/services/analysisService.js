@@ -11,11 +11,12 @@ const __dirname = path.dirname(__filename);
 const tmpPath = path.join(__dirname, '../../tmp');
 const git = simpleGit();
 
-// ✅ CORREÇÃO: Modelo correto do Gemini
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ 
-  model: "gemini-2.5-flash",
+  model: "gemini-2.5-flash", 
   generationConfig: {
+    responseMimeType: "application/json",
     temperature: 0.2,
     topP: 0.95,
     topK: 40,
@@ -171,8 +172,8 @@ analysisService.analyzeRepository = async (project) => {
         break;
       } catch (error) {
         attempt++;
+        console.error(`⚠️  Tentativa ${attempt} falhou:`, error.message);
         if (attempt === 3) throw error;
-        console.log(`⚠️  Tentativa ${attempt} falhou, tentando novamente...`);
         await new Promise(resolve => setTimeout(resolve, 2000)); // Aguarda 2s
       }
     }
@@ -180,14 +181,19 @@ analysisService.analyzeRepository = async (project) => {
     const response = await result.response;
     let text = response.text();
 
-    // 6. Limpar e validar JSON
     text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     
     let jsonContent;
     try {
       jsonContent = JSON.parse(text);
     } catch (parseError) {
-      console.error('❌ Erro ao parsear JSON:', parseError);
+      console.error('❌ Erro ao parsear JSON.');
+      console.error('📉 Tamanho do texto recebido:', text.length);
+      console.error('🔚 Fim da resposta (para debug):', text.slice(-200)); // Mostra onde cortou
+
+      if (parseError.message.includes("Unexpected end of JSON input")) {
+         throw new Error('A IA excedeu o limite de memória e cortou a resposta. O projeto pode ser muito grande.');
+      }
       throw new Error('A IA não retornou um JSON válido. Tente novamente.');
     }
 
@@ -242,7 +248,7 @@ analysisService.analyzeRepository = async (project) => {
       await project.update({ 
         status: 'failed', 
         progress: 0,
-        description: `❌ Falha: ${err.message.slice(0, 200)}`
+        description: `❌ Falha: ${err.message ? err.message.slice(0, 200) : 'Erro desconhecido'}`
       });
     } catch (dbError) {
       console.error('💥 Erro crítico ao atualizar status:', dbError);
@@ -252,70 +258,40 @@ analysisService.analyzeRepository = async (project) => {
 
 // --- Função Auxiliar: Construir Prompt Otimizado ---
 function buildOptimizedPrompt(projectName, framework, language, files) {
-  // Limitar a 30 arquivos mais relevantes
+  // Limitar a 30 arquivos mais relevantes para evitar estouro de tokens
   const relevantFiles = files.slice(0, 30);
   
   let filesContent = '';
   relevantFiles.forEach(file => {
-    filesContent += `\n\n--- ARQUIVO: ${file.relativePath} ---\n${file.content}`;
+    // Reduzimos o separador para economizar tokens
+    filesContent += `\nFILE:${file.relativePath}\n${file.content}`;
   });
 
-  return `Você é um Engenheiro de Software Sênior especializado em documentação de APIs.
+  return `
+Role: Senior Software Engineer.
+Task: Analyze the code and generate a COMPLETE OpenAPI 3.0 specification in JSON format.
 
-**TAREFA:** Analise o código-fonte abaixo e gere uma especificação OpenAPI 3.0 COMPLETA e VÁLIDA em formato JSON.
-
-**INFORMAÇÕES DO PROJETO:**
-- Nome: ${projectName}
+Project Info:
+- Name: ${projectName}
 - Framework: ${framework}
-- Linguagem: ${language}
+- Language: ${language}
 
-**INSTRUÇÕES CRÍTICAS:**
-1. Identifique TODOS os endpoints (rotas HTTP) no código
-2. Para cada endpoint, extraia:
-   - Método HTTP (GET, POST, PUT, DELETE, PATCH)
-   - Caminho da rota (path)
-   - Parâmetros de rota (path parameters)
-   - Query parameters
-   - Request body (com schema detalhado)
-   - Responses (status codes e schemas)
-   - Descrição clara do que o endpoint faz
+Instructions:
+1. Identify all HTTP endpoints, methods, parameters, and bodies.
+2. Create accurate schemas for request/response bodies.
+3. Be concise. Do not add conversational text.
+4. Output ONLY standard JSON.
 
-3. Identifique e documente todos os schemas/modelos de dados
-4. Use a estrutura OpenAPI 3.0 PADRÃO
-5. Seja DETALHADO nas descrições
-6. Inclua exemplos quando possível
-
-**FORMATO DE SAÍDA:**
-- Retorne APENAS o JSON válido
-- NÃO inclua markdown, backticks ou explicações
-- O JSON deve começar com { e terminar com }
-
-**ESTRUTURA ESPERADA:**
+Expected Structure (OpenAPI 3.0):
 {
   "openapi": "3.0.0",
-  "info": {
-    "title": "${projectName}",
-    "version": "1.0.0",
-    "description": "Descrição da API"
-  },
-  "paths": {
-    "/rota": {
-      "get": {
-        "summary": "...",
-        "parameters": [...],
-        "responses": {...}
-      }
-    }
-  },
-  "components": {
-    "schemas": {...}
-  }
+  "info": { "title": "${projectName}", "version": "1.0.0" },
+  "paths": { ... },
+  "components": { "schemas": { ... } }
 }
 
-**CÓDIGO-FONTE DO PROJETO:**
-${filesContent}
-
-**LEMBRE-SE:** Retorne APENAS JSON válido, sem formatação markdown.`;
+Codebase:
+${filesContent}`;
 }
 
 export default analysisService;
